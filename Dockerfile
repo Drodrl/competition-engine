@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . .
 
 # Build the Go app
-RUN go build -o main ./cmd
+RUN go build -o main ./cmd/test
 
 # This container exposes port 8080 to the outside world
 EXPOSE 8080
