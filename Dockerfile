@@ -7,14 +7,14 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o main
+RUN go build -o main . && chmod +x main
 
 FROM alpine:latest
 
 WORKDIR /root/
 
-COPY --from=builder /app/main /main
+COPY --from=builder /app/main /root/main
 
 EXPOSE 8080
 
-CMD ["/main"]
+CMD ["./main"]
