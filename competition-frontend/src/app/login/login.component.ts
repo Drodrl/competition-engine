@@ -15,7 +15,7 @@ export class LoginComponent {
 
   onLogin(formValues: any): void {
     console.log('Logging in:', formValues);
-    this.http.post('http://localhost:8080/login', formValues)
+    this.http.post('/api/login', formValues)
       .subscribe({
         next: (response) => {
           console.log('Login response:', response);
