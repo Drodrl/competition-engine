@@ -53,7 +53,11 @@ func loginHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	writer.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(writer).Encode(response)
+
+	if err := json.NewEncoder(writer).Encode(response); err != nil {
+		http.Error(writer, "Error writing response", http.StatusInternalServerError)
+		log.Printf("Error encoding response: %v", err)
+	}
 }
 
 func connectToDatabase() {
@@ -74,6 +78,7 @@ func connectToDatabase() {
 	}
 
 	log.Printf("PostgreSQL version: %s\n", version)
+
 }
 
 func main() {
