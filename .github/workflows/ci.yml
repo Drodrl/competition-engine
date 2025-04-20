@@ -48,7 +48,7 @@ jobs:
 
     - name: Test Angular
       working-directory: competition-frontend
-      run: ng test --watch=false --code-coverage --karma-config karma.conf.js || true
+      run: ng test --watch=false --code-coverage --karma-config karma.conf.js
 
     # Upload coverage report
     - name: Upload coverage to Codecov
