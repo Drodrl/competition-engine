@@ -1,10 +1,10 @@
-name: Go CI
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request: 
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
   build:
@@ -12,23 +12,60 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # Go Setup
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
         go-version: '1.24'
         check-latest: true
 
-    - name: Install dependencies
+    - name: Install Go Dependencies
+      working-directory: backend
       run: go mod download
-
-    - name: Build
+      
+    - name: Build Go
+      working-directory: backend
       run: go build -v ./...
+      
+    - name: Test Go
+      working-directory: backend
+      run: go test ./... -coverprofile coverage.out 
 
-    - name: Test
-      run: go test -v ./...
+    #Angular Setup
+    - name: Install Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
 
+    - name: Install Angular Dependencies
+      working-directory: competition-frontend
+      run: npm ci
+      
+
+    - name: Test Angular
+      working-directory: competition-frontend
+      run: ng test --watch=false --code-coverage --karma-config karma.conf.js
+
+    # Upload coverage report for backend
+    - name: Upload backend coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        files: backend/coverage.out
+        flags: backend
+        fail_ci_if_error: true
+
+    # Upload coverage report for frontend
+    - name: Upload frontend coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        files: competition-frontend/coverage/competition-frontend/lcov.info
+        flags: frontend
+        fail_ci_if_error: true
+
+    #Linting Go
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v4
       with:
         version: latest
         args: --timeout=5m 
+        working-directory: backend
