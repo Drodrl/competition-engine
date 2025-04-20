@@ -7,13 +7,13 @@ import (
 )
 
 type Credentials struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 type LoginResponse struct {
 	Message string `json:"message"`
-	Token string `json:"token,omitempty"` 
+	Token   string `json:"token,omitempty"`
 }
 
 func enableCORS(next http.Handler) http.Handler {
@@ -32,24 +32,27 @@ func enableCORS(next http.Handler) http.Handler {
 }
 
 func loginHandler(writer http.ResponseWriter, request *http.Request) {
-    if request.Method != http.MethodPost {
-        http.Error(writer, "HTTP Method not allowed", http.StatusMethodNotAllowed)
-        return
-    }
+	if request.Method != http.MethodPost {
+		http.Error(writer, "HTTP Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-    var creds Credentials
-    if err := json.NewDecoder(request.Body).Decode(&creds); err != nil {
-        http.Error(writer, "Error reading data", http.StatusBadRequest)
-        return
-    }
+	var creds Credentials
+	if err := json.NewDecoder(request.Body).Decode(&creds); err != nil {
+		http.Error(writer, "Error reading data", http.StatusBadRequest)
+		return
+	}
 
-    response := LoginResponse{
-        Message: "Login successful",
-        Token:   "token-dummy", //Token dummy used as a placeholder
-    }
+	response := LoginResponse{
+		Message: "Login successful",
+		Token:   "token-dummy", //Token dummy used as a placeholder
+	}
 
-    writer.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(writer).Encode(response)
+	writer.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(writer).Encode(response); err != nil {
+		http.Error(writer, "Error writing response", http.StatusInternalServerError)
+		log.Printf("Error encoding response: %v", err)
+	}
 }
 
 func main() {

@@ -49,20 +49,12 @@ jobs:
       working-directory: competition-frontend
       run: ng test --watch=false --code-coverage --karma-config karma.conf.js || true
 
-    # Upload coverage report for backend
-    - name: Upload backend coverage to Codecov
+    # Upload coverage report
+    - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       with:
-        files: backend/coverage.out
-        flags: backend
-        fail_ci_if_error: true
-
-    # Upload coverage report for frontend
-    - name: Upload frontend coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        files: competition-frontend/coverage/competition-frontend/lcov.info
-        flags: frontend
+        files: backend/coverage.out,competition-frontend/coverage/competition-frontend/lcov.info
+        flags: overall-coverage
         fail_ci_if_error: true
 
     #Linting Go
