@@ -1,9 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+
+	_ "github.com/lib/pq"
 )
 
 type Credentials struct {
@@ -49,13 +53,37 @@ func loginHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	writer.Header().Set("Content-Type", "application/json")
+
 	if err := json.NewEncoder(writer).Encode(response); err != nil {
 		http.Error(writer, "Error writing response", http.StatusInternalServerError)
 		log.Printf("Error encoding response: %v", err)
 	}
 }
 
+func connectToDatabase() {
+	connectionString := os.Getenv("DATABASE_URL")
+	if connectionString == "" {
+		log.Fatal("ERROR: No database connection string")
+	}
+
+	db, err := sql.Open("postgres", connectionString)
+	if err != nil {
+		log.Fatal("ERROR: Couldn't connect to database:", err)
+	}
+	defer db.Close()
+
+	var version string
+	if err := db.QueryRow("SELECT version()").Scan(&version); err != nil {
+		log.Fatal("Failed to execute query:", err)
+	}
+
+	log.Printf("PostgreSQL version: %s\n", version)
+
+}
+
 func main() {
+	connectToDatabase()
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/login", loginHandler)
 
