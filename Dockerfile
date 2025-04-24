@@ -1,15 +1,34 @@
-FROM golang:1.24-alpine
+#Stage 1: Build Angular App
+FROM node:20 as frontend
 
-# Set the Current Working Directory inside the container
-WORKDIR /app
+WORKDIR /app/frontend
 
-COPY . .
+#Install dependencies and build Angular app
+COPY ./competition-frontend/package*.json ./
+RUN npm install
+COPY ./competition-frontend ./
+RUN npm run build --prod
 
-# Build the Go app
-RUN go build -o main ./cmd/test
+#Stage 2: Build Go backend
+FROM golang:1.24-alpine as backend
 
-# This container exposes port 8080 to the outside world
-EXPOSE 8080
+WORKDIR /app/backend
 
-# Run the binary program produced by `go build`
-CMD ["./main"]
+COPY ./backend/go.mod ./backend/go.sum ./
+RUN go mod tidy
+COPY ./backend ./
+
+RUN go build -o server main.go
+
+#Stage 3: Serve Angular with Nginx and run Go backend
+FROM nginx:alpine
+
+COPY --from=frontend /app/frontend/dist/competition-frontend/browser /usr/share/nginx/html
+
+COPY ./nginx.conf /etc/nginx/nginx.conf
+
+COPY --from=backend /app/backend/server /server
+
+EXPOSE 80 8080
+
+CMD ["/bin/sh", "-c", "/server & nginx -g 'daemon off;'"]
