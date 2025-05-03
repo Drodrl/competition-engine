@@ -18,7 +18,7 @@ COPY ./backend/go.mod ./backend/go.sum ./
 RUN go mod tidy
 COPY ./backend ./
 
-RUN go build -o server main.go
+RUN go build -o server
 
 #Stage 3: Serve Angular with Nginx and run Go backend
 FROM nginx:alpine
