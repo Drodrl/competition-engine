@@ -1,8 +1,12 @@
 package main
 
 import (
+	"embed"
+	"io/fs"
 	"log"
 	"net/http"
+
+	"github.com/Drodrl/competition-engine/handlers"
 )
 
 type Credentials struct {
@@ -14,6 +18,9 @@ type LoginResponse struct {
 	Message string `json:"message"`
 	Token   string `json:"token,omitempty"`
 }
+
+//go:embed static/*
+var staticFiles embed.FS
 
 func EnableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -37,8 +44,24 @@ func main() {
 	}
 	defer db.Close()
 
+	staticContent, err := fs.Sub(staticFiles, "static/browser")
+	if err != nil {
+		log.Fatalf("failed to create sub FS: %v", err)
+	}
+
+	fileServer := http.FileServer(http.FS(staticContent))
+
 	mux := http.NewServeMux()
 	mux.Handle("/login", EnableCORS(NewLoginHandler(db)))
+
+	mux.Handle("/api/competitions", EnableCORS(handlers.CreateFullCompetitionHandler(db)))
+
+	mux.Handle("/", fileServer)
+
+	mux.Handle("/api/sports", EnableCORS(handlers.GetSportsHandler(db)))
+	mux.Handle("/api/structure-types", EnableCORS(handlers.GetStructureTypesHandler(db)))
+	mux.Handle("/api/activity-types", EnableCORS(handlers.GetActivityTypesHandler(db)))
+	mux.Handle("/api/tourney-formats", EnableCORS(handlers.GetTournamentFormatsHandler(db)))
 
 	log.Println("Server listening on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", EnableCORS(mux)))
