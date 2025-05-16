@@ -8,7 +8,7 @@ import (
 	//"github.com/Drodrl/competition-engine/handlers"
 )
 
-//go:embed static/browser/*
+//go:embed static/*
 var staticFiles embed.FS
 
 type Credentials struct {
