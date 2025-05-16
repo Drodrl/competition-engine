@@ -1,9 +1,15 @@
 package main
 
 import (
+	"embed"
+	"io/fs"
 	"log"
 	"net/http"
+	//"github.com/Drodrl/competition-engine/handlers"
 )
+
+//go:embed static/browser/*
+var staticFiles embed.FS
 
 type Credentials struct {
 	Email    string `json:"email"`
@@ -37,8 +43,29 @@ func main() {
 	}
 	defer db.Close()
 
+	//handlers.SetDB(db)
+
+	staticContent, err := fs.Sub(staticFiles, "static/browser")
+	if err != nil {
+		log.Fatalf("failed to create sub FS: %v", err)
+	}
+
+	fileServer := http.FileServer(http.FS(staticContent))
+
 	mux := http.NewServeMux()
 	mux.Handle("/login", EnableCORS(NewLoginHandler(db)))
+
+	//mux.Handle("/api/competitions", EnableCORS(handlers.CreateFullCompetitionHandler(db)))
+	//mux.Handle("/api/competitions/draft", EnableCORS(http.HandlerFunc(handlers.CreateDraftCompetition)))
+	//mux.Handle("/api/competitions/organizer/", EnableCORS(http.HandlerFunc(handlers.GetCompetitionsByOrganizer)))
+	//mux.Handle("/api/competitions/", EnableCORS(handlers.CompetitionByIDHandler()))
+
+	mux.Handle("/", fileServer)
+
+	//mux.Handle("/api/sports", EnableCORS(handlers.GetSportsHandler(db)))
+	//mux.Handle("/api/structure-types", EnableCORS(handlers.GetStructureTypesHandler(db)))
+	//mux.Handle("/api/activity-types", EnableCORS(handlers.GetActivityTypesHandler(db)))
+	//mux.Handle("/api/tourney-formats", EnableCORS(handlers.GetTournamentFormatsHandler(db)))
 
 	log.Println("Server listening on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", EnableCORS(mux)))
