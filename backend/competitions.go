@@ -15,7 +15,11 @@ type Competition struct {
 
 func NewCompetitionListHandler(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rows, err := db.Query("SELECT competition_id, competition_name, sport_id, start_date FROM competitions")
+		rows, err := db.Query(`
+            SELECT c.competition_id, c.competition_name, s.sport_name, c.start_date
+            FROM competitions c
+            JOIN sports s ON c.sport_id = s.sport_id
+        `)
 		if err != nil {
 			http.Error(w, "Failed to fetch competitions", http.StatusInternalServerError)
 			return

@@ -1,0 +1,36 @@
+<h1>Sign up your team for a competition</h1>
+
+<table>
+
+    <th>Competition Name</th>
+    <th>Sport</th>
+    <th>Start Date</th>
+    
+  <tr *ngFor="let comp of competitions">
+    <td>{{ comp.competition_name }}</td>
+    <td>{{ comp.sport_id }}</td>
+    <td>{{ comp.start_date | date }}</td>
+    <td><button (click)="openModal(comp.competition_id)">Sign Up</button></td>
+  </tr>
+</table>
+
+<div *ngIf="showModal" class="modal">
+  <div class="modal-content">
+    <h2>Select a Team</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Team Name</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let team of teams">
+          <td>{{ team.team_name }}</td>
+          <td><button (click)="signUp(team.team_id)">Sign Up</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <button (click)="showModal = false">Close</button>
+  </div>
+</div>

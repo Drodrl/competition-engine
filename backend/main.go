@@ -57,7 +57,9 @@ func main() {
 
 	mux.Handle("/api/competitions", EnableCORS(NewCompetitionListHandler(db)))
 	mux.Handle("/api/athletes", EnableCORS(NewAthletesHandler(db)))
+	mux.Handle("/api/teams", EnableCORS(NewTeamsHandler(db)))
 	mux.Handle("/user_signup", EnableCORS(NewUserSignupHandler(db)))
+	mux.Handle("/team_signup", EnableCORS(NewTeamSignupHandler(db)))
 	mux.Handle("/team_create", EnableCORS(NewTeamCreateHandler(db)))
 	//mux.Handle("/api/competitions", EnableCORS(handlers.CreateFullCompetitionHandler(db)))
 	//mux.Handle("/api/competitions/draft", EnableCORS(http.HandlerFunc(handlers.CreateDraftCompetition)))
