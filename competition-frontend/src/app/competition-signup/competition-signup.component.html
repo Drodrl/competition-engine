@@ -1,0 +1,16 @@
+<h1>Sign up for a competition</h1>
+
+<table>
+
+    <th>Competition Name</th>
+    <th>Sport ID</th>
+    <th>Start Date</th>
+    
+  <tr *ngFor="let comp of competitions">
+    <td>{{ comp.competition_name }}</td>
+    <td>{{ comp.sport_id }}</td>
+    <td>{{ comp.start_date | date }}</td>
+    <td><button (click)="signUp(comp.competition_id)">Sign Up</button></td>
+  </tr>
+</table>
+    
