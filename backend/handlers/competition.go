@@ -37,7 +37,9 @@ func CreateDraftCompetition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{"competition_id": competitionID})
+	if err := json.NewEncoder(w).Encode(map[string]int{"competition_id": competitionID}); err != nil {
+		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // DELETE /api/competitions/{id}
@@ -103,7 +105,9 @@ func GetCompetitionsByOrganizer(w http.ResponseWriter, r *http.Request) {
 		competitions = append(competitions, c)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(competitions)
+	if err := json.NewEncoder(w).Encode(competitions); err != nil {
+		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // GET /api/competitions/{id}
@@ -128,7 +132,9 @@ func GetCompetitionByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(c)
+	if err := json.NewEncoder(w).Encode(c); err != nil {
+		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // PUT /api/competitions/{id}
@@ -250,7 +256,9 @@ func GetStagesByCompetitionID(w http.ResponseWriter, r *http.Request) {
 		stages = append(stages, s)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stages)
+	if err := json.NewEncoder(w).Encode(stages); err != nil {
+		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // POST /api/competitions/{id}/stages
