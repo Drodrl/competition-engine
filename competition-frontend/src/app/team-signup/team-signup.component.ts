@@ -34,14 +34,14 @@ export class TeamSignupComponent implements OnInit {
 
   ngOnInit() {
     this.userId = Number(sessionStorage.getItem('userId'));
-    this.http.get<Competition[]>('/api/competitions').subscribe((data: any) => {
+    this.http.get<Competition[]>('/api/handlers/competitions').subscribe((data: any) => {
       this.competitions = data;
     });
   }
 
   openModal(competitionId: number) {
     this.selectedCompetitionId = competitionId;
-    this.http.get<Team[]>('/api/teams', { params: { user_id: String(this.userId) } }).subscribe((data: any) => {
+    this.http.get<Team[]>('/api/handlers/teams', { params: { user_id: String(this.userId) } }).subscribe((data: any) => {
       this.teams = data;
       this.showModal = true; 
     });
@@ -54,7 +54,7 @@ export class TeamSignupComponent implements OnInit {
     }
 
     const payload = { competition_id: this.selectedCompetitionId, team_id: teamId };
-    this.http.post('/team_signup', payload).subscribe({
+    this.http.post('/handlers/team_signup', payload).subscribe({
       next: () => {
         alert('Team signed up successfully!');
         this.showModal = false;

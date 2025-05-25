@@ -30,7 +30,7 @@ export class TeamCreateComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.http.get<User[]>('/api/athletes').subscribe((data: any) => {
+    this.http.get<User[]>('/api/handlers/athletes').subscribe((data: any) => {
       this.users = data;
     });
   }
@@ -50,7 +50,7 @@ export class TeamCreateComponent implements OnInit {
       userIds: this.selectedUserIds
     };
 
-    this.http.post('/team_create', payload).subscribe({
+    this.http.post('/handlers/team_create', payload).subscribe({
       next: () => alert('Team created successfully!'),
       error: (err: any) => {
             const errorMessage = err.error?.message || 'Create team failed';

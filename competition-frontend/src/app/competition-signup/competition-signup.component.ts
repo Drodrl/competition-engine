@@ -25,7 +25,7 @@ export class CompetitionSignupComponent implements OnInit {
 
   ngOnInit() {
     this.userId = Number(sessionStorage.getItem('userId'));
-    this.http.get<Competition[]>('/api/competitions').subscribe((data: any) => {
+    this.http.get<Competition[]>('/api/handlers/competitions').subscribe((data: any) => {
       this.competitions = data;
     });
   }
@@ -38,7 +38,7 @@ export class CompetitionSignupComponent implements OnInit {
 
 
     const payload = { competition_id: competitionId, user_id: this.userId };
-    this.http.post('/user_signup', payload).subscribe({
+    this.http.post('/handlers/user_signup', payload).subscribe({
       next: () => alert('Successfully signed up!'),
       error: (err: any) => {
             const errorMessage = err.error?.message || 'Signup failed';

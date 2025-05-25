@@ -1,17 +1,12 @@
-package main
+package handlers
 
 import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-)
 
-type Competition struct {
-	ID        int    `json:"competition_id"`
-	Name      string `json:"competition_name"`
-	Sport     string `json:"sport_id"`
-	StartDate string `json:"start_date"`
-}
+	"github.com/Drodrl/competition-engine/models"
+)
 
 func NewCompetitionListHandler(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -26,9 +21,9 @@ func NewCompetitionListHandler(db *sql.DB) http.Handler {
 		}
 		defer rows.Close()
 
-		var competitions []Competition
+		var competitions []models.Competition
 		for rows.Next() {
-			var c Competition
+			var c models.Competition
 			if err := rows.Scan(&c.ID, &c.Name, &c.Sport, &c.StartDate); err != nil {
 				http.Error(w, "Failed to scan competition"+err.Error(), http.StatusInternalServerError)
 				return
@@ -40,4 +35,5 @@ func NewCompetitionListHandler(db *sql.DB) http.Handler {
 			http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
 		}
 	})
+
 }

@@ -1,16 +1,12 @@
-package main
+package handlers
 
 import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-)
 
-type User struct {
-	ID        int    `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-}
+	"github.com/Drodrl/competition-engine/models"
+)
 
 func NewAthletesHandler(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -21,9 +17,9 @@ func NewAthletesHandler(db *sql.DB) http.Handler {
 		}
 		defer rows.Close()
 
-		var users []User
+		var users []models.User
 		for rows.Next() {
-			var u User
+			var u models.User
 			if err := rows.Scan(&u.ID, &u.FirstName, &u.LastName); err != nil {
 				http.Error(w, "Failed to scan user", http.StatusInternalServerError)
 				return
