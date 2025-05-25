@@ -23,6 +23,9 @@ export class LoginComponent {
         if (response.role === 'organizer') {
           sessionStorage.setItem('userId', response.userId.toString()); // Save user ID in session
           this.router.navigate(['/organizer-dashboard']); // Redirect to organizer dashboard
+        } else if (response.role === 'athlete') {
+          sessionStorage.setItem('userId', response.userId.toString()); 
+          this.router.navigate(['/athlete-dashboard']); 
         } else { //Add rest of the roles here
           alert('Only organizers can log in.');
         }

@@ -5,7 +5,8 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
-	//"github.com/Drodrl/competition-engine/handlers"
+
+	"github.com/Drodrl/competition-engine/handlers"
 )
 
 //go:embed static/*
@@ -55,6 +56,12 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/login", EnableCORS(NewLoginHandler(db)))
 
+	mux.Handle("/api/handlers/competitions", EnableCORS(handlers.NewCompetitionListHandler(db)))
+	mux.Handle("/api/handlers/athletes", EnableCORS(handlers.NewAthletesHandler(db)))
+	mux.Handle("/api/handlers/teams", EnableCORS(handlers.NewTeamsHandler(db)))
+	mux.Handle("/handlers/user_signup", EnableCORS(handlers.NewUserSignupHandler(db)))
+	mux.Handle("/handlers/team_signup", EnableCORS(handlers.NewTeamSignupHandler(db)))
+	mux.Handle("/handlers/team_create", EnableCORS(handlers.NewTeamCreateHandler(db)))
 	//mux.Handle("/api/competitions", EnableCORS(handlers.CreateFullCompetitionHandler(db)))
 	//mux.Handle("/api/competitions/draft", EnableCORS(http.HandlerFunc(handlers.CreateDraftCompetition)))
 	//mux.Handle("/api/competitions/organizer/", EnableCORS(http.HandlerFunc(handlers.GetCompetitionsByOrganizer)))
