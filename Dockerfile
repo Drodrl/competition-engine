@@ -3,7 +3,6 @@ FROM node:20 AS frontend
 
 WORKDIR /app/frontend
 COPY competition-frontend/package*.json ./
-
 RUN npm install
 COPY competition-frontend ./
 RUN npm run build --configuration=production

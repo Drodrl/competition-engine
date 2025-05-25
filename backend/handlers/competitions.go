@@ -24,7 +24,7 @@ func NewCompetitionListHandler(db *sql.DB) http.Handler {
 		var competitions []models.Competition
 		for rows.Next() {
 			var c models.Competition
-			if err := rows.Scan(&c.ID, &c.Name, &c.Sport, &c.StartDate); err != nil {
+			if err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate); err != nil {
 				http.Error(w, "Failed to scan competition"+err.Error(), http.StatusInternalServerError)
 				return
 			}

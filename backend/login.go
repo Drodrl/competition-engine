@@ -83,9 +83,9 @@ func NewLoginHandler(db *sql.DB) http.Handler {
 			if err := json.NewEncoder(w).Encode(response); err != nil {
 				http.Error(w, "Error writing response", http.StatusInternalServerError)
 				log.Printf("Error encoding response: %v", err)
-			} 
-			
-		}else {
+			}
+
+		} else {
 			http.Error(w, "Unauthorized role", http.StatusForbidden)
 		}
 

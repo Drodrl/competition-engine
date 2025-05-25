@@ -4,8 +4,9 @@ import { HttpClientModule } from '@angular/common/http';
 import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideZoneChangeDetection({ eventCoalescing: true }), 
-  provideRouter(appRoutes),
-  importProvidersFrom(HttpClientModule)
-]
+  providers: [
+    provideZoneChangeDetection({ eventCoalescing: true }), 
+    provideRouter(appRoutes),
+    importProvidersFrom(HttpClientModule)
+  ]
 };
