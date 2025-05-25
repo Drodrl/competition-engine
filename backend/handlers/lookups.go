@@ -28,7 +28,9 @@ func GetSportsHandler(db *sql.DB) http.HandlerFunc {
 			list = append(list, i)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(list)
+		if err := json.NewEncoder(w).Encode(list); err != nil {
+			http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -54,7 +56,9 @@ func GetStructureTypesHandler(db *sql.DB) http.HandlerFunc {
 			list = append(list, i)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(list)
+		if err := json.NewEncoder(w).Encode(list); err != nil {
+			http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -81,6 +85,8 @@ func GetTournamentFormatsHandler(db *sql.DB) http.HandlerFunc {
 			list = append(list, i)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(list)
+		if err := json.NewEncoder(w).Encode(list); err != nil {
+			http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
