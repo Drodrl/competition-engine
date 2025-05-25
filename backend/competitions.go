@@ -36,6 +36,8 @@ func NewCompetitionListHandler(db *sql.DB) http.Handler {
 			competitions = append(competitions, c)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(competitions)
+		if err := json.NewEncoder(w).Encode(competitions); err != nil {
+			http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		}
 	})
 }

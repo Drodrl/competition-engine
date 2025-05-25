@@ -48,6 +48,8 @@ func NewTeamsHandler(db *sql.DB) http.Handler {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(teams)
+		if err := json.NewEncoder(w).Encode(teams); err != nil {
+			http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		}
 	})
 }

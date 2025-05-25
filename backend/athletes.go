@@ -31,6 +31,8 @@ func NewAthletesHandler(db *sql.DB) http.Handler {
 			users = append(users, u)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(users)
+		if err := json.NewEncoder(w).Encode(users); err != nil {
+			http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		}
 	})
 }

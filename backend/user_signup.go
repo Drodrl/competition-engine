@@ -70,8 +70,8 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "Signup successful",
-		})
+		if err := json.NewEncoder(w).Encode(map[string]string{"message": "Signup successful"}); err != nil {
+			http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		}
 	})
 }
