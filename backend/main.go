@@ -10,6 +10,9 @@ import (
 	"github.com/Drodrl/competition-engine/handlers"
 )
 
+//go:embed static/*
+var staticFiles embed.FS
+
 type Credentials struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -19,9 +22,6 @@ type LoginResponse struct {
 	Message string `json:"message"`
 	Token   string `json:"token,omitempty"`
 }
-
-//go:embed static/*
-var staticFiles embed.FS
 
 func EnableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +56,6 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/login", EnableCORS(NewLoginHandler(db)))
-
 	// Competition endpoints
 	mux.Handle("/api/competitions/draft", EnableCORS(http.HandlerFunc(handlers.CreateDraftCompetition)))
 	mux.Handle("/api/competitions/organizer/", EnableCORS(http.HandlerFunc(handlers.GetCompetitionsByOrganizer)))
@@ -77,6 +76,13 @@ func main() {
 			handlers.CompetitionByIDHandler().ServeHTTP(w, r)
 		}
 	})))
+
+	mux.Handle("/api/handlers/competitions", EnableCORS(handlers.NewCompetitionListHandler(db)))
+	mux.Handle("/api/handlers/athletes", EnableCORS(handlers.NewAthletesHandler(db)))
+	mux.Handle("/api/handlers/teams", EnableCORS(handlers.NewTeamsHandler(db)))
+	mux.Handle("/handlers/user_signup", EnableCORS(handlers.NewUserSignupHandler(db)))
+	mux.Handle("/handlers/team_signup", EnableCORS(handlers.NewTeamSignupHandler(db)))
+	mux.Handle("/handlers/team_create", EnableCORS(handlers.NewTeamCreateHandler(db)))
 
 	// Lookup endpoints
 	mux.Handle("/api/sports", EnableCORS(handlers.GetSportsHandler(db)))

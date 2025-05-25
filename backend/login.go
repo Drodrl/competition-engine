@@ -68,8 +68,26 @@ func NewLoginHandler(db *sql.DB) http.Handler {
 				http.Error(w, "Error writing response", http.StatusInternalServerError)
 				log.Printf("Error encoding response: %v", err)
 			}
+
+		} else if roleID == 2 {
+			response := struct {
+				UserID int    `json:"userId"`
+				Role   string `json:"role"`
+			}{
+				UserID: userID,
+				Role:   "athlete",
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+
+			if err := json.NewEncoder(w).Encode(response); err != nil {
+				http.Error(w, "Error writing response", http.StatusInternalServerError)
+				log.Printf("Error encoding response: %v", err)
+			}
+
 		} else {
 			http.Error(w, "Unauthorized role", http.StatusForbidden)
 		}
+
 	})
 }

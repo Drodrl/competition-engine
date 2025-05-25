@@ -22,7 +22,7 @@ export interface StageDTO {
   participants_at_end: number;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class CompetitionService {
   constructor(private http: HttpClient) {}
 

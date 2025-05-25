@@ -4,6 +4,10 @@ import { CompetitionCreateComponent } from './competition-create/competition-cre
 import { OrganizerDashboardComponent } from './organizer-dashboard/organizer-dashboard.component';
 import { MyCompetitionsComponent } from './my-competitions/my-competitions.component';
 import { EditCompetitionComponent } from './edit-competition/edit-competition.component';
+import { AthleteDashboardComponent} from './athlete-dashboard/athlete-dashboard.component';
+import { CompetitionSignupComponent } from './competition-signup/competition-signup.component';
+import { TeamCreateComponent } from './team-create/team-create.component';
+import { TeamSignupComponent } from './team-signup/team-signup.component';  
 
 export const appRoutes: Routes = [
   { path: '', redirectTo: 'login-page', pathMatch: 'full' }, // Redirect root to login
@@ -11,5 +15,9 @@ export const appRoutes: Routes = [
   { path: 'organizer-dashboard', component: OrganizerDashboardComponent },
   { path: 'create-competition', component: CompetitionCreateComponent },
   { path: 'my-competitions', component: MyCompetitionsComponent},
-  { path: 'edit-competition/:id', component: EditCompetitionComponent}
+  { path: 'edit-competition/:id', component: EditCompetitionComponent},
+  { path: 'athlete-dashboard', component: AthleteDashboardComponent },
+  { path: 'competition-signup', component: CompetitionSignupComponent },
+  { path: 'team-create', component: TeamCreateComponent },
+  { path: 'team-signup', component: TeamSignupComponent } 
 ];
