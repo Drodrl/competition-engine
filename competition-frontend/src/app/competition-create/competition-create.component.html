@@ -8,12 +8,6 @@
     <option *ngFor="let s of sports" [value]="s.id">{{ s.name }}</option>
   </select><br/>
 
-  <label>Structure:</label>
-  <select formControlName="structure_type_id">
-    <option [ngValue]="null">-- Select Structure --</option>
-    <option *ngFor="let st of structures" [value]="st.id">{{ st.name }}</option>
-  </select><br/>
-
   <label>Start Date:</label>
   <input type="date" formControlName="start_date" /><br/>
 
@@ -23,54 +17,10 @@
   <label>Max Participants:</label>
   <input type="number" formControlName="max_participants" /><br/>
 
-  <h3>Stages</h3>
-  <div formArrayName="stages">
-    <div *ngFor="let stage of stages.controls; let i = index" [formGroupName]="i">
-      <label>Stage Name:</label>
-      <input formControlName="stage_name" /><br/>
-
-      <label>Format:</label>
-      <select formControlName="tourney_format_id">
-        <option [ngValue]="null">-- Select Format --</option>
-        <option *ngFor="let f of formats" [value]="f.id">{{ f.name }}</option>
-      </select><br/>
-
-      <!-- Groups field is only displayed when the format is "Groups" -->
-      <label *ngIf="stage.get('tourney_format_id')?.value === 4">Groups:</label>
-      <input
-        *ngIf="stage.get('tourney_format_id')?.value === 4"
-        type="number"
-        formControlName="groups"
-        min="1"
-      /><br/>
-
-      <label>Activity:</label>
-      <select formControlName="activity_type_id">
-        <option [ngValue]="null">-- Select Activity --</option>
-        <option *ngFor="let a of activities" [value]="a.id">{{ a.name }}</option>
-      </select><br/>
-
-      <label>Participants:</label>
-      <input formControlName="participants" readonly /><br/>
-
-      <button
-        type="button"
-        (click)="removeStage(i)"
-        *ngIf="stages.length > 1 && form.get('structure_type_id')?.value !== 1"
-      >
-        Remove
-      </button>
-      <hr />
-    </div>
-  </div>
-
-  <button
-    type="button"
-    (click)="addStage()"
-    [disabled]="stages.length >= 3 || form.get('structure_type_id')?.value === 1"
-  >
-    Add Stage
-  </button><br/><br/>
+  <label>
+    <input type="checkbox" formControlName="flag_teams" />
+    Competition is for teams (uncheck for individual athletes)
+  </label><br/>
 
   <button type="submit" [disabled]="form.invalid">Create</button>
 </form>

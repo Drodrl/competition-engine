@@ -14,7 +14,6 @@ func GetSportsHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		defer rows.Close()
-
 		type Item struct {
 			ID   int    `json:"id"`
 			Name string `json:"name"`
@@ -23,7 +22,7 @@ func GetSportsHandler(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var i Item
 			if err := rows.Scan(&i.ID, &i.Name); err != nil {
-				http.Error(w, "Failed to parse sports", http.StatusInternalServerError)
+				http.Error(w, "Failed to scan sport", http.StatusInternalServerError)
 				return
 			}
 			list = append(list, i)
@@ -41,7 +40,6 @@ func GetStructureTypesHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		defer rows.Close()
-
 		type Item struct {
 			ID   int    `json:"id"`
 			Name string `json:"name"`
@@ -50,34 +48,7 @@ func GetStructureTypesHandler(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var i Item
 			if err := rows.Scan(&i.ID, &i.Name); err != nil {
-				http.Error(w, "Failed to parse structure types", http.StatusInternalServerError)
-				return
-			}
-			list = append(list, i)
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(list)
-	}
-}
-
-func GetActivityTypesHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		rows, err := db.Query("SELECT activity_type_id, activity_name FROM activity_types")
-		if err != nil {
-			http.Error(w, "Failed to fetch activity types", http.StatusInternalServerError)
-			return
-		}
-		defer rows.Close()
-
-		type Item struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		}
-		var list []Item
-		for rows.Next() {
-			var i Item
-			if err := rows.Scan(&i.ID, &i.Name); err != nil {
-				http.Error(w, "Failed to parse activity types", http.StatusInternalServerError)
+				http.Error(w, "Failed to scan structure type", http.StatusInternalServerError)
 				return
 			}
 			list = append(list, i)
@@ -89,22 +60,22 @@ func GetActivityTypesHandler(db *sql.DB) http.HandlerFunc {
 
 func GetTournamentFormatsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rows, err := db.Query("SELECT tourney_format_id, tourney_name FROM tournament_formats")
+		rows, err := db.Query("SELECT tourney_format_id, tourney_name, min_participants FROM tournament_formats")
 		if err != nil {
 			http.Error(w, "Failed to fetch tournament formats", http.StatusInternalServerError)
 			return
 		}
 		defer rows.Close()
-
-		type Item struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
+		type TournamentFormat struct {
+			ID              int    `json:"id"`
+			Name            string `json:"name"`
+			MinParticipants int    `json:"min_participants"`
 		}
-		var list []Item
+		var list []TournamentFormat
 		for rows.Next() {
-			var i Item
-			if err := rows.Scan(&i.ID, &i.Name); err != nil {
-				http.Error(w, "Failed to parse tournament formats", http.StatusInternalServerError)
+			var i TournamentFormat
+			if err := rows.Scan(&i.ID, &i.Name, &i.MinParticipants); err != nil {
+				http.Error(w, "Failed to scan tournament format", http.StatusInternalServerError)
 				return
 			}
 			list = append(list, i)

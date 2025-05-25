@@ -20,16 +20,56 @@ func NewLoginHandler(db *sql.DB) http.Handler {
 			return
 		}
 
-		response := LoginResponse{
-			Message: "Login successful",
-			Token:   "token-dummy", //Token dummy used as a placeholder
+		var userID int
+		var roleID int
+		err := db.QueryRow(`
+			SELECT id_user, role_id 
+			FROM users 
+			WHERE email = $1 AND password_hash = $2
+			`, creds.Email, creds.Password).Scan(&userID, &roleID)
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+			} else {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				log.Printf("Database error: %v", err)
+			}
+			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
+		if roleID == 3 {
+			response := struct {
+				UserID int    `json:"userId"`
+				Role   string `json:"role"`
+			}{
+				UserID: userID,
+				Role:   "organizer",
+			}
 
-		if err := json.NewEncoder(w).Encode(response); err != nil {
-			http.Error(w, "Error writing response", http.StatusInternalServerError)
-			log.Printf("Error encoding response: %v", err)
+			w.Header().Set("Content-Type", "application/json")
+
+			if err := json.NewEncoder(w).Encode(response); err != nil {
+				http.Error(w, "Error writing response", http.StatusInternalServerError)
+				log.Printf("Error encoding response: %v", err)
+			}
+		} else if roleID == 1 {
+			response := struct {
+				UserID int    `json:"userId"`
+				Role   string `json:"role"`
+			}{
+				UserID: userID,
+				Role:   "admin",
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+
+			if err := json.NewEncoder(w).Encode(response); err != nil {
+				http.Error(w, "Error writing response", http.StatusInternalServerError)
+				log.Printf("Error encoding response: %v", err)
+			}
+		} else {
+			http.Error(w, "Unauthorized role", http.StatusForbidden)
 		}
 	})
 }
