@@ -28,7 +28,7 @@ func TestUserSignupSuccess(t *testing.T) {
 	body, _ := json.Marshal(reqBody)
 
 	// Mock user existence
-	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM users WHERE id=\$1\)`).
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM users WHERE id_user=\$1\)`).
 		WithArgs(userID).
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
@@ -155,13 +155,23 @@ func TestTeamSignupSuccess(t *testing.T) {
 	body, _ := json.Marshal(reqBody)
 
 	// Mock team existence
-	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM teams WHERE id=\$1\)`).
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM teams WHERE team_id=\$1\)`).
 		WithArgs(teamID).
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
-		// Mock competition existence
+	// Mock competition existence
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM competitions WHERE competition_id=\$1\)`).
 		WithArgs(competitionID).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+
+	// Mock check for existing signup
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM competition_participants WHERE competition_id=\$1 AND team_id=\$2\)`).
+		WithArgs(competitionID, teamID).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+
+	// Mockuser is a team leader
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM user_teams WHERE team_id=\$1 AND team_position='Team Leader'\)`).
+		WithArgs(teamID).
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
 	mock.ExpectExec(`INSERT INTO competition_participants`).
@@ -196,7 +206,7 @@ func TestSignupTeamDoesNotExist(t *testing.T) {
 	body, _ := json.Marshal(reqBody)
 
 	// Simulate that the team does not exist
-	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM teams WHERE id=\$1\)`).
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM teams WHERE team_id=\$1\)`).
 		WithArgs(teamID).
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
@@ -228,7 +238,7 @@ func TestTeamSignupCompetitionDoesNotExist(t *testing.T) {
 	body, _ := json.Marshal(reqBody)
 
 	// Mock team existence
-	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM teams WHERE id_team=\$1\)`).
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM teams WHERE team_id=\$1\)`).
 		WithArgs(teamID).
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
