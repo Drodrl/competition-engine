@@ -8,8 +8,10 @@
     
   <tr *ngFor="let comp of competitions">
     <td>{{ comp.competition_name }}</td>
-    <td>{{ comp.sport_id }}</td>
+    <td>{{ getSportName(comp.sport_id) }}</td>
     <td>{{ comp.start_date | date }}</td>
+    <td>{{ comp.end_date | date }}</td>
+    <td>{{ getCompStatus(comp) }}</td>
     <td><button (click)="openModal(comp.competition_id)">Sign Up</button></td>
   </tr>
 </table>
