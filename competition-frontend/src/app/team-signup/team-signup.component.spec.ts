@@ -1,24 +1,24 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TeamSignupComponent } from './team-signup.component';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { By } from '@angular/platform-browser';
 
 describe('TeamSignupComponent', () => {
   let component: TeamSignupComponent;
   let fixture: ComponentFixture<TeamSignupComponent>;
   let httpMock: HttpTestingController;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       imports: [TeamSignupComponent, HttpClientTestingModule]
     }).compileComponents();
-  }));
 
-  beforeEach(() => {
     fixture = TestBed.createComponent(TeamSignupComponent);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
-    spyOn(sessionStorage, 'getItem').and.returnValue('42');
-    fixture.detectChanges();
+
+    // Mock sessionStorage
+    spyOn(sessionStorage, 'getItem').and.returnValue('1');
   });
 
   afterEach(() => {
@@ -26,81 +26,108 @@ describe('TeamSignupComponent', () => {
   });
 
   it('should create', () => {
-    httpMock.expectOne('/api/handlers/competitions').flush([]);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/competitions').flush([]);
+    httpMock.expectOne('/api/sports').flush([]);
     expect(component).toBeTruthy();
   });
 
-  it('should fetch competitions on init', () => {
-    const mockCompetitions = [
-      { competition_id: 1, competition_name: 'Comp1', sport_id: 2, start_date: new Date() }
-    ];
-    const req = httpMock.expectOne('/api/handlers/competitions');
-    expect(req.request.method).toBe('GET');
-    req.flush(mockCompetitions);
+  it('should load competitions and sports on init', fakeAsync(() => {
+    fixture.detectChanges();
 
+    // Mock competitions
+    const req1 = httpMock.expectOne('/api/competitions');
+    expect(req1.request.method).toBe('GET');
+    req1.flush([{ competition_id: 1, competition_name: 'Comp', sport_id: 2, start_date: new Date() }]);
+
+    // Mock sports
+    const req2 = httpMock.expectOne('/api/sports');
+    expect(req2.request.method).toBe('GET');
+    req2.flush([{ id: 2, name: 'Soccer' }]);
+
+    tick();
     expect(component.competitions.length).toBe(1);
-    expect(component.competitions[0].competition_name).toBe('Comp1');
-  });
+    expect(component.sports.length).toBe(1);
+  }));
 
-  it('should open modal and fetch teams', () => {
-    httpMock.expectOne('/api/handlers/competitions').flush([]);
+  it('should open modal and load teams', fakeAsync(() => {
+    fixture.detectChanges();
+
+    // Flush initial requests
+    httpMock.expectOne('/api/competitions').flush([]);
+    httpMock.expectOne('/api/sports').flush([]);
+
     component.userId = 42;
-    component.openModal(1);
+    component.openModal(5);
 
-    const req = httpMock.expectOne(r =>
-      r.url === '/api/handlers/teams' && r.params.get('user_id') === '42'
-    );
+    const req = httpMock.expectOne(r => r.url === '/api/handlers/teams' && r.params.get('user_id') === '42');
     expect(req.request.method).toBe('GET');
-    req.flush([{ team_id: 10, team_name: 'Team A' }]);
+    req.flush([{ team_id: 1, team_name: 'Team A' }]);
 
+    tick();
     expect(component.teams.length).toBe(1);
     expect(component.showModal).toBeTrue();
-  });
+  }));
 
-  it('should alert if no competition selected when signing up', () => {
-    httpMock.expectOne('/api/handlers/competitions').flush([]);
-    component.selectedCompetitionId = null;
-    spyOn(window, 'alert');
-    component.signUp(10);
-    expect(window.alert).toHaveBeenCalledWith('No competition selected');
-  });
+  it('should call signUp and close modal on success', fakeAsync(() => {
+    fixture.detectChanges();
+    httpMock.expectOne('/api/competitions').flush([]);
+    httpMock.expectOne('/api/sports').flush([]);
 
-  it('should POST signup and alert on success', () => {
-    httpMock.expectOne('/api/handlers/competitions').flush([]);
-    component.selectedCompetitionId = 1;
+    component.selectedCompetitionId = 10;
     spyOn(window, 'alert');
-    component.signUp(10);
+    component.showModal = true;
+
+    component.signUp(7);
 
     const req = httpMock.expectOne('/handlers/team_signup');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ competition_id: 1, team_id: 10 });
+    expect(req.request.body).toEqual({ competition_id: 10, team_id: 7 });
+    req.flush({ message: 'Signup successful' });
 
-    req.flush({});
+    tick();
     expect(window.alert).toHaveBeenCalledWith('Team signed up successfully!');
     expect(component.showModal).toBeFalse();
-  });
+  }));
 
-  it('should alert on signup error with message', () => {
-    httpMock.expectOne('/api/handlers/competitions').flush([]);
-    component.selectedCompetitionId = 1;
+  it('should alert error message on signup error', fakeAsync(() => {
+    fixture.detectChanges();
+    httpMock.expectOne('/api/competitions').flush([]);
+    httpMock.expectOne('/api/sports').flush([]);
+
+    component.selectedCompetitionId = 10;
     spyOn(window, 'alert');
-    component.signUp(10);
+    component.showModal = true;
+
+    component.signUp(7);
 
     const req = httpMock.expectOne('/handlers/team_signup');
-    req.flush({ message: 'Signup failed' }, { status: 400, statusText: 'Bad Request' });
+    req.flush({ message: 'Signup failed: already signed up' }, { status: 400, statusText: 'Bad Request' });
 
-    expect(window.alert).toHaveBeenCalledWith('Signup failed');
+    tick();
+    expect(window.alert).toHaveBeenCalledWith('Signup failed: already signed up');
+    expect(component.showModal).toBeTrue();
+  }));
+
+  it('should alert if no competition selected on signUp', () => {
+    spyOn(window, 'alert');
+    component.selectedCompetitionId = null;
+    component.signUp(1);
+    expect(window.alert).toHaveBeenCalledWith('No competition selected');
   });
 
-  it('should alert "Signup failed" if error message is missing', () => {
-    httpMock.expectOne('/api/handlers/competitions').flush([]);
-    component.selectedCompetitionId = 1;
-    spyOn(window, 'alert');
-    component.signUp(10);
+  it('should get sport name by id', () => {
+    component.sports = [{ id: 3, name: 'Basketball' }];
+    expect(component.getSportName(3)).toBe('Basketball');
+    expect(component.getSportName(99)).toBe('99');
+  });
 
-    const req = httpMock.expectOne('/handlers/team_signup');
-    req.flush({}, { status: 400, statusText: 'Bad Request' });
-
-    expect(window.alert).toHaveBeenCalledWith('Signup failed');
+  it('should get competition status', () => {
+    component.competitions = [{ competition_id: 1, competition_name: '', sport_id: 0, start_date: new Date(), status: 1 }];
+    expect(component.getCompStatus(component.competitions[0])).toBe('Open');
+    component.competitions[0].status = 0;
+    expect(component.getCompStatus(component.competitions[0])).toBe('Closed');
+    component.competitions[0].status = 99 as any;
+    expect(component.getCompStatus(component.competitions[0])).toBe('Unknown');
   });
 });

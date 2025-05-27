@@ -41,13 +41,17 @@ export class CompetitionSignupComponent implements OnInit {
     });
   }
 
-  getSportName(sportId: number): string {
-    const sport = this.sports.find(s => s.id === sportId);
-    return sport ? sport.name : sportId.toString();
+  getSportName(sportId: number | string | null | undefined): string {
+    if (sportId === null || sportId === undefined) return String(sportId);
+    if (!this.sports) return String(sportId);
+    const sport = this.sports.find(s => s.id === Number(sportId));
+    return sport ? sport.name : String(sportId);
   }
 
-  getCompStatus(competition: Competition): string {
-    const status = this.competitions.find(c => c.competition_id === competition.competition_id)?.status;
+  getCompStatus(competition: Competition | null | undefined): string {
+    if (!competition || !this.competitions) return "Unknown";
+    const found = this.competitions.find(c => c.competition_id === competition.competition_id);
+    const status = found?.status ?? competition.status;
     if (status === 1) return "Open";
     if (status === 0) return "Closed";
     return "Unknown";
