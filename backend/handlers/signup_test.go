@@ -241,7 +241,7 @@ func TestTeamSignupSuccess(t *testing.T) {
 		WithArgs(competitionID).
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
-	// Mock competition status check
+ // Mock competition status check
 	mock.ExpectQuery(`SELECT status FROM competitions WHERE competition_id=\$1`).
 		WithArgs(competitionID).
 		WillReturnRows(sqlmock.NewRows([]string{"status"}).AddRow(1))
