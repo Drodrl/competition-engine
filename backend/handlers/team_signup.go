@@ -59,6 +59,19 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 			return
 		}
 
+		// Check if competition is open
+		var isOpen int
+		err = db.QueryRow("SELECT status FROM competitions WHERE competition_id=$1", req.CompetitionID).Scan(&isOpen)
+		if err != nil {
+			// log.Printf("Error checking competition status: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		if isOpen != 1 {
+			http.Error(w, "Competition is not open for signup", http.StatusBadRequest)
+			return
+		}
+
 		// Check if team is already signed up for the competition
 		var teamSignedUp bool
 		err = db.QueryRow(`
@@ -74,6 +87,33 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 			http.Error(w, "Team is already signed up for the competition", http.StatusBadRequest)
 			return
 		}
+
+		// check if competition is already full
+		var maxParticipants int
+
+		err = db.QueryRow(`
+			SELECT max_participants FROM competitions WHERE competition_id=$1
+		`, req.CompetitionID).Scan(&maxParticipants)
+		if err != nil {
+			// log.Printf("Error checking competition max participants: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		var numParticipants int
+		err = db.QueryRow(`
+			SELECT COUNT(*) FROM competition_participants WHERE competition_id=$1
+		`, req.CompetitionID).Scan(&numParticipants)
+		if err != nil {
+			// log.Printf("Error checking competition full status: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		if numParticipants >= maxParticipants {
+			// log.Println("Competition is already full:", req.CompetitionID)
+			http.Error(w, "Competition is already full", http.StatusBadRequest)
+			return
+		}
+
 		// Check if athlete is a team leader
 		var isTeamLeader bool
 		err = db.QueryRow(`
