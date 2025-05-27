@@ -1,14 +1,17 @@
 package main
 
 import (
-	"database/sql"
-	"encoding/json"
+	"embed"
+	"io/fs"
 	"log"
 	"net/http"
-	"os"
+	"strings"
 
-	_ "github.com/lib/pq"
+	"github.com/Drodrl/competition-engine/handlers"
 )
+
+//go:embed static/*
+var staticFiles embed.FS
 
 type Credentials struct {
 	Email    string `json:"email"`
@@ -20,7 +23,7 @@ type LoginResponse struct {
 	Token   string `json:"token,omitempty"`
 }
 
-func enableCORS(next http.Handler) http.Handler {
+func EnableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -35,60 +38,61 @@ func enableCORS(next http.Handler) http.Handler {
 	})
 }
 
-func loginHandler(writer http.ResponseWriter, request *http.Request) {
-	if request.Method != http.MethodPost {
-		http.Error(writer, "HTTP Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var creds Credentials
-	if err := json.NewDecoder(request.Body).Decode(&creds); err != nil {
-		http.Error(writer, "Error reading data", http.StatusBadRequest)
-		return
-	}
-
-	response := LoginResponse{
-		Message: "Login successful",
-		Token:   "token-dummy", //Token dummy used as a placeholder
-	}
-
-	writer.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(writer).Encode(response); err != nil {
-		http.Error(writer, "Error writing response", http.StatusInternalServerError)
-		log.Printf("Error encoding response: %v", err)
-	}
-}
-
-func connectToDatabase() {
-	connectionString := os.Getenv("DATABASE_URL")
-	if connectionString == "" {
-		log.Fatal("ERROR: No database connection string")
-	}
-
-	db, err := sql.Open("postgres", connectionString)
+func main() {
+	db, err := OpenDatabase()
 	if err != nil {
-		log.Fatal("ERROR: Couldn't connect to database:", err)
+		log.Fatal("ERROR: Couldn't open database:", err)
 	}
 	defer db.Close()
 
-	var version string
-	if err := db.QueryRow("SELECT version()").Scan(&version); err != nil {
-		log.Fatal("Failed to execute query:", err)
+	handlers.SetDB(db)
+
+	staticContent, err := fs.Sub(staticFiles, "static/browser")
+	if err != nil {
+		log.Fatalf("failed to create sub FS: %v", err)
 	}
 
-	log.Printf("PostgreSQL version: %s\n", version)
-
-}
-
-func main() {
-	connectToDatabase()
+	fileServer := http.FileServer(http.FS(staticContent))
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/login", loginHandler)
+	mux.Handle("/login", EnableCORS(NewLoginHandler(db)))
+	// Competition endpoints
+	mux.Handle("/api/competitions/draft", EnableCORS(http.HandlerFunc(handlers.CreateDraftCompetition)))
+	mux.Handle("/api/competitions/organizer/", EnableCORS(http.HandlerFunc(handlers.GetCompetitionsByOrganizer)))
+	mux.Handle("/api/competitions/", EnableCORS(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		switch {
+		case strings.HasSuffix(path, "/stages") && r.Method == http.MethodGet:
+			handlers.GetStagesByCompetitionID(w, r)
+		case strings.HasSuffix(path, "/stages") && r.Method == http.MethodPost:
+			handlers.AddStageToCompetition(w, r)
+		case strings.Contains(path, "/stages/") && r.Method == http.MethodPut:
+			handlers.UpdateStage(w, r)
+		case strings.Contains(path, "/stages/") && r.Method == http.MethodDelete:
+			handlers.DeleteStage(w, r)
+		case r.Method == http.MethodDelete:
+			handlers.DeleteCompetition(w, r)
+		default:
+			handlers.CompetitionByIDHandler().ServeHTTP(w, r)
+		}
+	})))
+	mux.Handle("/api/competitions", EnableCORS(http.HandlerFunc(handlers.GetAllCompetitions)))
+	// mux.Handle("/api/handlers/competitions", EnableCORS(handlers.NewCompetitionListHandler(db)))
+	mux.Handle("/api/handlers/competitions", EnableCORS(handlers.NewUserSignupHandler(db)))
+	mux.Handle("/api/handlers/athletes", EnableCORS(handlers.NewAthletesHandler(db)))
+	mux.Handle("/api/handlers/teams", EnableCORS(handlers.NewTeamsHandler(db)))
+	mux.Handle("/handlers/user_signup", EnableCORS(handlers.NewUserSignupHandler(db)))
+	mux.Handle("/handlers/team_signup", EnableCORS(handlers.NewTeamSignupHandler(db)))
+	mux.Handle("/handlers/team_create", EnableCORS(handlers.NewTeamCreateHandler(db)))
 
-	handler := enableCORS(mux)
+	// Lookup endpoints
+	mux.Handle("/api/sports", EnableCORS(handlers.GetSportsHandler(db)))
+	mux.Handle("/api/structure-types", EnableCORS(handlers.GetStructureTypesHandler(db)))
+	mux.Handle("/api/tourney-formats", EnableCORS(handlers.GetTournamentFormatsHandler(db)))
+
+	// Static files (Angular app)
+	mux.Handle("/", fileServer)
 
 	log.Println("Server listening on port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	log.Fatal(http.ListenAndServe(":8080", EnableCORS(mux)))
 }

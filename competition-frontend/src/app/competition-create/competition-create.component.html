@@ -1,0 +1,26 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <label>Competition Name:</label>
+  <input formControlName="competition_name" /><br/>
+
+  <label>Sport:</label>
+  <select formControlName="sport_id">
+    <option [ngValue]="null">-- Select Sport --</option>
+    <option *ngFor="let s of sports" [value]="s.id">{{ s.name }}</option>
+  </select><br/>
+
+  <label>Start Date:</label>
+  <input type="date" formControlName="start_date" /><br/>
+
+  <label>End Date:</label>
+  <input type="date" formControlName="end_date" /><br/>
+
+  <label>Max Participants:</label>
+  <input type="number" formControlName="max_participants" /><br/>
+
+  <label>
+    <input type="checkbox" formControlName="flag_teams" />
+    Competition is for teams (uncheck for individual athletes)
+  </label><br/>
+
+  <button type="submit" [disabled]="form.invalid">Create</button>
+</form>
