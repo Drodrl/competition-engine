@@ -26,8 +26,8 @@ func TestTeamCreateSuccess(t *testing.T) {
 		WithArgs("Test Team", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{"team_id"}).AddRow(1))
 
-	mock.ExpectExec("INSERT INTO user_teams \\(team_id, user_id, date_created, date_updated\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\)").
-		WithArgs(1, 123, sqlmock.AnyArg(), sqlmock.AnyArg()).
+	mock.ExpectExec("INSERT INTO user_teams \\(team_id, user_id, team_position, date_created, date_updated\\) VALUES \\(\\$1, \\$2, \\$3, \\$4, \\$5\\)").
+		WithArgs(1, 123, "Team Leader", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	handler := NewTeamCreateHandler(db)
