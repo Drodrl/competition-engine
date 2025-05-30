@@ -72,6 +72,20 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 			return
 		}
 
+		// Check if it is a team competition
+		var isTeamCompetition bool
+		err = db.QueryRow("SELECT flag_team FROM competitions WHERE competition_id=$1", req.CompetitionID).Scan(&isTeamCompetition)
+		if err != nil {
+			log.Printf("Error checking competition type: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		if !isTeamCompetition {
+			log.Println("Competition is not a team competition:", req.CompetitionID)
+			http.Error(w, "Cannot sign up to an individual competition", http.StatusBadRequest)
+			return
+		}
+
 		// Check if team is already signed up for the competition
 		var teamSignedUp bool
 		err = db.QueryRow(`
