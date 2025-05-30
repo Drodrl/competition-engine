@@ -102,6 +102,36 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 			return
 		}
 
+		// Check if any user in the team is already part of another team in the same competition
+		var conflictingUsers []int
+		rows, err := db.Query(`
+			SELECT user_id
+			FROM user_teams ut
+			INNER JOIN competition_participants cp ON ut.team_id = cp.team_id
+			WHERE cp.competition_id = $1 AND ut.team_id != $2
+		`, req.CompetitionID, *req.TeamID)
+		if err != nil {
+			log.Printf("Error checking conflicting users: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		for rows.Next() {
+			var userID int
+			if err := rows.Scan(&userID); err != nil {
+				log.Printf("Error scanning conflicting user: %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			conflictingUsers = append(conflictingUsers, userID)
+		}
+
+		if len(conflictingUsers) > 0 {
+			log.Printf("Conflicting users found: %v", conflictingUsers)
+			http.Error(w, "Some users in the team are already part of another team in the competition", http.StatusBadRequest)
+			return
+		}
+
 		// check if competition is already full
 		var maxParticipants int
 
