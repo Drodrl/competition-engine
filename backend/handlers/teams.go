@@ -68,12 +68,11 @@ func RemoveParticipantsHandler(db *sql.DB) http.HandlerFunc {
 			http.Error(w, "Failed to begin transaction", http.StatusInternalServerError)
 			return
 		}
-		defer tx.Rollback()
-
-		if err := tx.Rollback(); err != nil {
-			log.Printf("Error during rollback: %v", err)
-			return
-		}
+		defer func() {
+			if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+				log.Printf("Error during rollback: %v", err)
+			}
+		}()
 
 		// Remove users from the team
 		for _, userID := range payload.UserIDs {
@@ -121,12 +120,11 @@ func AddParticipantsHandler(db *sql.DB) http.HandlerFunc {
 			http.Error(w, "Failed to begin transaction", http.StatusInternalServerError)
 			return
 		}
-		defer tx.Rollback()
-
-		if err := tx.Rollback(); err != nil {
-			log.Printf("Error during rollback: %v", err)
-			return
-		}
+		defer func() {
+			if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+				log.Printf("Error during rollback: %v", err)
+			}
+		}()
 
 		// Add users to the team
 		for _, userID := range payload.UserIDs {
