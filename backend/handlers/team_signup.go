@@ -33,7 +33,7 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM teams WHERE team_id=$1)", *req.TeamID).Scan(&exists)
 		if err != nil {
 			log.Printf("Error checking team existence: %v", err)
-			http.Error(w, "Team does not exist", http.StatusInternalServerError)
+			http.Error(w, "Error checking team existence", http.StatusInternalServerError)
 			return
 		}
 		if req.TeamID == nil {
@@ -51,7 +51,7 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM competitions WHERE competition_id=$1)", req.CompetitionID).Scan(&exists)
 		if err != nil {
 			log.Printf("Error checking stage existence: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking stage existence", http.StatusInternalServerError)
 			return
 		}
 		if !exists {
@@ -64,7 +64,7 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		err = db.QueryRow("SELECT status FROM competitions WHERE competition_id=$1", req.CompetitionID).Scan(&isOpen)
 		if err != nil {
 			// log.Printf("Error checking competition status: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking competition status", http.StatusInternalServerError)
 			return
 		}
 		if isOpen != 1 {
@@ -74,10 +74,10 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 
 		// Check if it is a team competition
 		var isTeamCompetition bool
-		err = db.QueryRow("SELECT flag_team FROM competitions WHERE competition_id=$1", req.CompetitionID).Scan(&isTeamCompetition)
+		err = db.QueryRow("SELECT flag_teams FROM competitions WHERE competition_id=$1", req.CompetitionID).Scan(&isTeamCompetition)
 		if err != nil {
 			log.Printf("Error checking competition type: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking competition type", http.StatusInternalServerError)
 			return
 		}
 		if !isTeamCompetition {
@@ -93,7 +93,7 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		`, req.CompetitionID, *req.TeamID).Scan(&teamSignedUp)
 		if err != nil {
 			log.Printf("Error checking team signup status: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking team signup status", http.StatusInternalServerError)
 			return
 		}
 		if teamSignedUp {
@@ -105,22 +105,22 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		// Check if any user in the team is already part of another team in the same competition
 		var conflictingUsers []int
 		rows, err := db.Query(`
-			SELECT user_id
-			FROM user_teams ut
-			INNER JOIN competition_participants cp ON ut.team_id = cp.team_id
-			WHERE cp.competition_id = $1 AND ut.team_id != $2
+		SELECT ut.user_id
+		FROM user_teams ut
+		INNER JOIN competition_participants cp ON ut.team_id = cp.team_id
+		WHERE cp.competition_id = $1 AND ut.team_id != $2
 		`, req.CompetitionID, *req.TeamID)
 		if err != nil {
 			log.Printf("Error checking conflicting users: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking conflicting users", http.StatusInternalServerError)
 			return
 		}
 
 		for rows.Next() {
 			var userID int
 			if err := rows.Scan(&userID); err != nil {
-				log.Printf("Error scanning conflicting user: %v", err)
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				log.Printf("Error scanning conflicting users: %v", err)
+				http.Error(w, "Error scanning conflicting users", http.StatusInternalServerError)
 				return
 			}
 			conflictingUsers = append(conflictingUsers, userID)
@@ -140,7 +140,7 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		`, req.CompetitionID).Scan(&maxParticipants)
 		if err != nil {
 			// log.Printf("Error checking competition max participants: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking competition max participants", http.StatusInternalServerError)
 			return
 		}
 		var numParticipants int
@@ -149,7 +149,7 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		`, req.CompetitionID).Scan(&numParticipants)
 		if err != nil {
 			// log.Printf("Error checking competition full status: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking competition full status", http.StatusInternalServerError)
 			return
 		}
 		if numParticipants >= maxParticipants {
@@ -165,7 +165,7 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		`, *req.TeamID).Scan(&isTeamLeader)
 		if err != nil {
 			log.Printf("Error checking team leader status: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking team leader status", http.StatusInternalServerError)
 			return
 		}
 		if !isTeamLeader {
@@ -183,7 +183,7 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 
 		if err != nil {
 			log.Printf("Error signing up: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error signing up", http.StatusInternalServerError)
 			return
 		}
 

@@ -87,9 +87,9 @@ func TestUserSignupSuccess(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"status"}).AddRow(1))
 
 	// Mock it is a team competition
-	mock.ExpectQuery(`SELECT flag_team FROM competitions WHERE competition_id=\$1`).
+	mock.ExpectQuery(`SELECT flag_teams FROM competitions WHERE competition_id=\$1`).
 		WithArgs(competitionID).
-		WillReturnRows(sqlmock.NewRows([]string{"flag_team"}).AddRow(false))
+		WillReturnRows(sqlmock.NewRows([]string{"flag_teams"}).AddRow(false))
 
 	// Mock user is not already signed up
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM competition_participants WHERE competition_id=\$1 AND user_id=\$2\)`).
@@ -222,9 +222,9 @@ func TestUserSignupCompetitionFull(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"status"}).AddRow(1))
 
 	// Mock single player competition
-	mock.ExpectQuery(`SELECT flag_team FROM competitions WHERE competition_id=\$1`).
+	mock.ExpectQuery(`SELECT flag_teams FROM competitions WHERE competition_id=\$1`).
 		WithArgs(competitionID).
-		WillReturnRows(sqlmock.NewRows([]string{"flag_team"}).AddRow(false))
+		WillReturnRows(sqlmock.NewRows([]string{"flag_teams"}).AddRow(false))
 
 	// Mock user is not already signed up
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM competition_participants WHERE competition_id=\$1 AND user_id=\$2\)`).
@@ -326,9 +326,9 @@ func TestUserSignupTeamCompetition(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"status"}).AddRow(1))
 
 	// Mock it is a team competition
-	mock.ExpectQuery(`SELECT flag_team FROM competitions WHERE competition_id=\$1`).
+	mock.ExpectQuery(`SELECT flag_teams FROM competitions WHERE competition_id=\$1`).
 		WithArgs(competitionID).
-		WillReturnRows(sqlmock.NewRows([]string{"flag_team"}).AddRow(true))
+		WillReturnRows(sqlmock.NewRows([]string{"flag_teams"}).AddRow(true))
 
 	req := httptest.NewRequest(http.MethodPost, "/user_signup", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -390,9 +390,9 @@ func TestTeamSignupSuccess(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"status"}).AddRow(1))
 
 	// Mock it is a team competition
-	mock.ExpectQuery(`SELECT flag_team FROM competitions WHERE competition_id=\$1`).
+	mock.ExpectQuery(`SELECT flag_teams FROM competitions WHERE competition_id=\$1`).
 		WithArgs(competitionID).
-		WillReturnRows(sqlmock.NewRows([]string{"flag_team"}).AddRow(true))
+		WillReturnRows(sqlmock.NewRows([]string{"flag_teams"}).AddRow(true))
 
 	// Mock check for existing signup
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM competition_participants WHERE competition_id=\$1 AND team_id=\$2\)`).
@@ -400,7 +400,7 @@ func TestTeamSignupSuccess(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
 	// Mock no conflicting users found
-	mock.ExpectQuery(`SELECT user_id FROM user_teams ut INNER JOIN competition_participants cp ON ut.team_id = cp.team_id WHERE cp.competition_id = \$1 AND ut.team_id != \$2`).
+	mock.ExpectQuery(`SELECT ut\.user_id FROM user_teams ut INNER JOIN competition_participants cp ON ut\.team_id = cp\.team_id WHERE cp\.competition_id = \$1 AND ut\.team_id != \$2`).
 		WithArgs(competitionID, teamID).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id"}))
 
@@ -535,9 +535,9 @@ func TestTeamSignupCompetitionFull(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"status"}).AddRow(1))
 
 	// Mock team competition
-	mock.ExpectQuery(`SELECT flag_team FROM competitions WHERE competition_id=\$1`).
+	mock.ExpectQuery(`SELECT flag_teams FROM competitions WHERE competition_id=\$1`).
 		WithArgs(competitionID).
-		WillReturnRows(sqlmock.NewRows([]string{"flag_team"}).AddRow(true))
+		WillReturnRows(sqlmock.NewRows([]string{"flag_teams"}).AddRow(true))
 
 	// Mock team is not already signed up
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM competition_participants WHERE competition_id=\$1 AND team_id=\$2\)`).
@@ -545,7 +545,7 @@ func TestTeamSignupCompetitionFull(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
 	// Mock no conflicting users found
-	mock.ExpectQuery(`SELECT user_id FROM user_teams ut INNER JOIN competition_participants cp ON ut.team_id = cp.team_id WHERE cp.competition_id = \$1 AND ut.team_id != \$2`).
+	mock.ExpectQuery(`SELECT ut\.user_id FROM user_teams ut INNER JOIN competition_participants cp ON ut\.team_id = cp\.team_id WHERE cp\.competition_id = \$1 AND ut\.team_id != \$2`).
 		WithArgs(competitionID, teamID).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id"}))
 
@@ -644,9 +644,9 @@ func TestTeamSignupNotTeamCompetition(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"status"}).AddRow(1))
 
 	// Mock it is not a team competition
-	mock.ExpectQuery(`SELECT flag_team FROM competitions WHERE competition_id=\$1`).
+	mock.ExpectQuery(`SELECT flag_teams FROM competitions WHERE competition_id=\$1`).
 		WithArgs(competitionID).
-		WillReturnRows(sqlmock.NewRows([]string{"flag_team"}).AddRow(false))
+		WillReturnRows(sqlmock.NewRows([]string{"flag_teams"}).AddRow(false))
 
 	req := httptest.NewRequest(http.MethodPost, "/team_signup", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -691,9 +691,9 @@ func TestTeamSignupUserNotTeamLeader(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"status"}).AddRow(1))
 
 	// Mock it is a team competition
-	mock.ExpectQuery(`SELECT flag_team FROM competitions WHERE competition_id=\$1`).
+	mock.ExpectQuery(`SELECT flag_teams FROM competitions WHERE competition_id=\$1`).
 		WithArgs(competitionID).
-		WillReturnRows(sqlmock.NewRows([]string{"flag_team"}).AddRow(true))
+		WillReturnRows(sqlmock.NewRows([]string{"flag_teams"}).AddRow(true))
 
 	// Mock check for existing signup
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM competition_participants WHERE competition_id=\$1 AND team_id=\$2\)`).
@@ -701,7 +701,7 @@ func TestTeamSignupUserNotTeamLeader(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
 	// Mock no conflicting users found
-	mock.ExpectQuery(`SELECT user_id FROM user_teams ut INNER JOIN competition_participants cp ON ut.team_id = cp.team_id WHERE cp.competition_id = \$1 AND ut.team_id != \$2`).
+	mock.ExpectQuery(`SELECT ut\.user_id FROM user_teams ut INNER JOIN competition_participants cp ON ut\.team_id = cp\.team_id WHERE cp\.competition_id = \$1 AND ut\.team_id != \$2`).
 		WithArgs(competitionID, teamID).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id"}))
 
@@ -763,9 +763,9 @@ func TestTeamSignupConflictingUsers(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"status"}).AddRow(1))
 
 	// Mock it is a team competition
-	mock.ExpectQuery(`SELECT flag_team FROM competitions WHERE competition_id=\$1`).
+	mock.ExpectQuery(`SELECT flag_teams FROM competitions WHERE competition_id=\$1`).
 		WithArgs(competitionID).
-		WillReturnRows(sqlmock.NewRows([]string{"flag_team"}).AddRow(true))
+		WillReturnRows(sqlmock.NewRows([]string{"flag_teams"}).AddRow(true))
 
 	// Mock check for existing signup
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM competition_participants WHERE competition_id=\$1 AND team_id=\$2\)`).
@@ -773,7 +773,7 @@ func TestTeamSignupConflictingUsers(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
 	// Mock conflicting users found
-	mock.ExpectQuery(`SELECT user_id FROM user_teams ut INNER JOIN competition_participants cp ON ut.team_id = cp.team_id WHERE cp.competition_id = \$1 AND ut.team_id != \$2`).
+	mock.ExpectQuery(`SELECT ut\.user_id FROM user_teams ut INNER JOIN competition_participants cp ON ut\.team_id = cp\.team_id WHERE cp\.competition_id = \$1 AND ut\.team_id != \$2`).
 		WithArgs(competitionID, teamID).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow(101).AddRow(102))
 
