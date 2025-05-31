@@ -1,0 +1,73 @@
+<h1>My teams</h1>
+
+<table border="1" style="border-collapse: collapse; width: 100%; text-align: left;">
+
+    <th>Team Name</th>
+    <th>Edit team</th>
+    <th>Leave team</th>
+    
+  <tr *ngFor="let team of teams">
+    <td>{{ team.team_name }}</td>
+    <td><button (click)="editTeam(team.team_id)">Edit</button></td>
+    <td><button (click)="leaveTeam(team.team_id)">Leave</button></td>
+  </tr>
+</table>
+
+<!-- Edit Team Modal -->
+<div *ngIf="showEditModal" class="modal">
+  <div class="modal-content">
+    <h2>Edit Team</h2>
+    <p><strong>Team Name:</strong> {{ selectedTeam?.team_name }}</p>
+
+    <!-- Participants Table -->
+    <h3>Participants</h3>
+    <table border="1" style="border-collapse: collapse; width: 100%; text-align: left;">
+      <thead>
+        <tr>
+          <th>Remove</th>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td><input type="checkbox" [(ngModel)]="user.remove" /></td>          
+          <td>{{ user.name_user }} {{ user.lname1_user }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Add Participants Button -->
+    <button (click)="openAddModal()">Add Participants</button>
+
+    <!-- Update Team Button -->
+    <button (click)="updateTeam()">Update Team</button>
+    <button (click)="closeEditModal()">Close</button>
+  </div>
+</div>
+
+<!-- Add Participants Modal -->
+<div *ngIf="showAddModal" class="modal">
+  <div class="modal-content">
+    <h2>Add Participants</h2>
+
+    <!-- Athletes Table -->
+    <table border="1" style="border-collapse: collapse; width: 100%; text-align: left;">
+      <thead>
+        <tr>
+          <th>Add</th>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let athlete of athletes"> 
+            <td><input type="checkbox" [(ngModel)]="athlete.add" /></td>
+            <td>{{ athlete.name_user }} {{ athlete.lname1_user }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Add Button -->
+    <button (click)="addParticipants()">Add</button>
+    <button (click)="closeAddModal()">Close</button>
+  </div>
+</div>

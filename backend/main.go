@@ -90,6 +90,12 @@ func main() {
 	mux.Handle("/api/sports", EnableCORS(handlers.GetSportsHandler(db)))
 	mux.Handle("/api/structure-types", EnableCORS(handlers.GetStructureTypesHandler(db)))
 	mux.Handle("/api/tourney-formats", EnableCORS(handlers.GetTournamentFormatsHandler(db)))
+	mux.Handle("/api/user-teams", EnableCORS(handlers.GetUserTeamsHandler(db)))
+	mux.Handle("/api/team-participants", EnableCORS(handlers.GetTeamParticipantsHandler(db)))
+
+	// Teams endpoints
+	mux.Handle("/api/remove-participants", EnableCORS(handlers.RemoveParticipantsHandler(db)))
+	mux.Handle("/api/add-participants", EnableCORS(handlers.AddParticipantsHandler(db)))
 
 	// Static files (Angular app)
 	mux.Handle("/", fileServer)
