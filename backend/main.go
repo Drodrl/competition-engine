@@ -79,6 +79,7 @@ func main() {
 	mux.Handle("/api/competitions", EnableCORS(http.HandlerFunc(handlers.GetAllCompetitions)))
 	// mux.Handle("/api/handlers/competitions", EnableCORS(handlers.NewCompetitionListHandler(db)))
 	mux.Handle("/api/handlers/competitions", EnableCORS(handlers.NewUserSignupHandler(db)))
+	mux.Handle("/api/competitions/flag_teams/", EnableCORS(http.HandlerFunc(handlers.GetCompetitionsByFlagTeams)))
 	mux.Handle("/api/handlers/athletes", EnableCORS(handlers.NewAthletesHandler(db)))
 	mux.Handle("/api/handlers/teams", EnableCORS(handlers.NewTeamsHandler(db)))
 	mux.Handle("/handlers/user_signup", EnableCORS(handlers.NewUserSignupHandler(db)))
