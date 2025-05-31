@@ -50,3 +50,91 @@ func NewTeamsHandler(db *sql.DB) http.Handler {
 		}
 	})
 }
+
+func RemoveParticipantsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var payload struct {
+			TeamID  int   `json:"team_id"`
+			UserIDs []int `json:"user_ids"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
+
+		tx, err := db.Begin()
+		if err != nil {
+			http.Error(w, "Failed to begin transaction", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback()
+
+		// Remove users from the team
+		for _, userID := range payload.UserIDs {
+			_, err := tx.Exec("DELETE FROM user_teams WHERE team_id = $1 AND user_id = $2", payload.TeamID, userID)
+			if err != nil {
+				http.Error(w, "Failed to remove participants", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// Update the date_updated field in the teams table
+		_, err = tx.Exec("UPDATE teams SET date_updated = NOW() WHERE team_id = $1", payload.TeamID)
+		if err != nil {
+			http.Error(w, "Failed to update team date", http.StatusInternalServerError)
+			return
+		}
+
+		if err := tx.Commit(); err != nil {
+			http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func AddParticipantsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var payload struct {
+			TeamID  int   `json:"team_id"`
+			UserIDs []int `json:"user_ids"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
+
+		tx, err := db.Begin()
+		if err != nil {
+			http.Error(w, "Failed to begin transaction", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback()
+
+		// Add users to the team
+		for _, userID := range payload.UserIDs {
+			_, err := tx.Exec("INSERT INTO user_teams (team_id, user_id, date_updated) VALUES ($1, $2, NOW())", payload.TeamID, userID)
+			if err != nil {
+				http.Error(w, "Failed to add participants", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// Update the date_updated field in the teams table
+		_, err = tx.Exec("UPDATE teams SET date_updated = NOW() WHERE team_id = $1", payload.TeamID)
+		if err != nil {
+			http.Error(w, "Failed to update team date", http.StatusInternalServerError)
+			return
+		}
+
+		if err := tx.Commit(); err != nil {
+			http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}

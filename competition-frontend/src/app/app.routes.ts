@@ -8,6 +8,7 @@ import { AthleteDashboardComponent} from './athlete-dashboard/athlete-dashboard.
 import { CompetitionSignupComponent } from './competition-signup/competition-signup.component';
 import { TeamCreateComponent } from './team-create/team-create.component';
 import { TeamSignupComponent } from './team-signup/team-signup.component';  
+import { TeamManageComponent } from './team-manage/team-manage.component';
 
 export const appRoutes: Routes = [
   { path: '', redirectTo: 'login-page', pathMatch: 'full' }, // Redirect root to login
@@ -19,5 +20,6 @@ export const appRoutes: Routes = [
   { path: 'athlete-dashboard', component: AthleteDashboardComponent },
   { path: 'competition-signup', component: CompetitionSignupComponent },
   { path: 'team-create', component: TeamCreateComponent },
-  { path: 'team-signup', component: TeamSignupComponent } 
+  { path: 'team-signup', component: TeamSignupComponent },
+  { path: 'team-manage', component: TeamManageComponent },
 ];

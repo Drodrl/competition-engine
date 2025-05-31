@@ -38,7 +38,7 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 
 		if err != nil {
 			// log.Printf("Error checking user existence: %v", err)
-			http.Error(w, "User does not exist", http.StatusInternalServerError)
+			http.Error(w, "Error checking user existence", http.StatusInternalServerError)
 			return
 		}
 
@@ -51,7 +51,7 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 		err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM competitions WHERE competition_id=$1)", req.CompetitionID).Scan(&exists)
 		if err != nil {
 			// log.Printf("Error checking stage existence: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking stage existence", http.StatusInternalServerError)
 			return
 		}
 		if !exists {
@@ -64,7 +64,7 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 		err = db.QueryRow("SELECT status FROM competitions WHERE competition_id=$1", req.CompetitionID).Scan(&isOpen)
 		if err != nil {
 			// log.Printf("Error checking competition status: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking competition status", http.StatusInternalServerError)
 			return
 		}
 		if isOpen != 1 {
@@ -79,7 +79,7 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 		`, req.CompetitionID, *req.UserID).Scan(&userSignedUp)
 		if err != nil {
 			// log.Printf("Error checking user signup status: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking user signup status", http.StatusInternalServerError)
 			return
 		}
 		if userSignedUp {
@@ -96,7 +96,7 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 		`, req.CompetitionID).Scan(&maxParticipants)
 		if err != nil {
 			// log.Printf("Error checking competition max participants: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking competition max participants", http.StatusInternalServerError)
 			return
 		}
 		var numParticipants int
@@ -105,7 +105,7 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 		`, req.CompetitionID).Scan(&numParticipants)
 		if err != nil {
 			// log.Printf("Error checking competition full status: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error checking competition full status", http.StatusInternalServerError)
 			return
 		}
 		if numParticipants >= maxParticipants {
@@ -123,7 +123,7 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 
 		if err != nil {
 			// log.Printf("Error signing up: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "Error signing up", http.StatusInternalServerError)
 			return
 		}
 
