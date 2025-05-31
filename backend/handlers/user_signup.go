@@ -33,6 +33,7 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 
 		if req.UserID == nil {
 			http.Error(w, "User ID is required", http.StatusBadRequest)
+			sendJSONError(w, "User ID is required", http.StatusBadRequest)
 			return
 		}
 
@@ -43,7 +44,8 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 		}
 
 		if !exists {
-			http.Error(w, "User does not exist", http.StatusBadRequest)
+			// http.Error(w, "User does not exist", http.StatusBadRequest)
+			sendJSONError(w, "User does not exist", http.StatusBadRequest)
 			return
 		}
 
@@ -55,7 +57,8 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 			return
 		}
 		if !exists {
-			http.Error(w, "Competition does not exist", http.StatusBadRequest)
+			// http.Error(w, "Competition does not exist", http.StatusBadRequest)
+			sendJSONError(w, "Competition does not exist", http.StatusBadRequest)
 			return
 		}
 
@@ -68,7 +71,8 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 			return
 		}
 		if isOpen != 1 {
-			http.Error(w, "Competition is not open for signup", http.StatusBadRequest)
+			// http.Error(w, "Competition is not open for signup", http.StatusBadRequest)
+			sendJSONError(w, "Competition is not open for signup", http.StatusBadRequest)
 			return
 		}
 
@@ -77,12 +81,13 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 		err = db.QueryRow("SELECT flag_teams FROM competitions WHERE competition_id=$1", req.CompetitionID).Scan(&isTeamCompetition)
 		if err != nil {
 			// log.Printf("Error checking competition type: %v", err)
-			http.Error(w, "Error checking competition type", http.StatusInternalServerError)	
+			http.Error(w, "Error checking competition type", http.StatusInternalServerError)
 			return
 		}
 		if isTeamCompetition {
 			// log.Println("Competition is a team competition:", req.CompetitionID)
-			http.Error(w, "Cannot sign up to a team competition as an individual player", http.StatusBadRequest)
+			// http.Error(w, "Cannot sign up to a team competition as an individual player", http.StatusBadRequest)
+			sendJSONError(w, "Cannot sign up to a team competition as an individual player", http.StatusBadRequest)
 			return
 		}
 
@@ -98,7 +103,8 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 		}
 		if userSignedUp {
 			// log.Println("User is already signed up for the competition:", *req.UserID)
-			http.Error(w, "User is already signed up for the competition", http.StatusBadRequest)
+			// http.Error(w, "User is already signed up for the competition", http.StatusBadRequest)
+			sendJSONError(w, "User is already signed up for the competition", http.StatusBadRequest)
 			return
 		}
 
@@ -124,7 +130,8 @@ func NewUserSignupHandler(db *sql.DB) http.Handler {
 		}
 		if numParticipants >= maxParticipants {
 			// log.Println("Competition is already full:", req.CompetitionID)
-			http.Error(w, "Competition is already full", http.StatusBadRequest)
+			// http.Error(w, "Competition is already full", http.StatusBadRequest)
+			sendJSONError(w, "Competition is already full", http.StatusBadRequest)
 			return
 		}
 

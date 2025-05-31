@@ -83,7 +83,7 @@ func TestTeamCreateNameExists(t *testing.T) {
 		t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, rec.Code)
 	}
 
-	expected := "Team name already exists"
+	expected := `{"message":"Team name already exists"}`
 	if rec.Body.String() != expected+"\n" {
 		t.Errorf("Expected response body %q, got %q", expected, rec.Body.String())
 	}
@@ -114,7 +114,7 @@ func TestTeamCreateInvalidPayload(t *testing.T) {
 		t.Errorf("Expected status code %d, got %d", http.StatusBadRequest, rec.Code)
 	}
 
-	expected := "Invalid request payload"
+	expected := `{"message":"Invalid request payload"}`
 	if rec.Body.String() != expected+"\n" {
 		t.Errorf("Expected response body %q, got %q", expected, rec.Body.String())
 	}
