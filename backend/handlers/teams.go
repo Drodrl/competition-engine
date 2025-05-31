@@ -70,6 +70,11 @@ func RemoveParticipantsHandler(db *sql.DB) http.HandlerFunc {
 		}
 		defer tx.Rollback()
 
+		if err := tx.Rollback(); err != nil {
+			log.Printf("Error during rollback: %v", err)
+			return
+		}
+
 		// Remove users from the team
 		for _, userID := range payload.UserIDs {
 			_, err := tx.Exec("DELETE FROM user_teams WHERE team_id = $1 AND user_id = $2", payload.TeamID, userID)
@@ -117,6 +122,11 @@ func AddParticipantsHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		defer tx.Rollback()
+
+		if err := tx.Rollback(); err != nil {
+			log.Printf("Error during rollback: %v", err)
+			return
+		}
 
 		// Add users to the team
 		for _, userID := range payload.UserIDs {
