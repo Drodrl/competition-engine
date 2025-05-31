@@ -101,12 +101,27 @@ func TestAddParticipantsHandler(t *testing.T) {
 	handler := AddParticipantsHandler(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO user_teams \\(team_id, user_id, date_updated\\) VALUES \\(\\$1, \\$2, NOW\\(\\)\\)").
+
+	// Mock the query to check if the user exists in the users table
+	mock.ExpectQuery("SELECT EXISTS \\(SELECT 1 FROM users WHERE id_user = \\$1\\)").
+		WithArgs(10).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+
+	// Mock the query to check if the user is already in the team
+	mock.ExpectQuery("SELECT EXISTS \\(SELECT 1 FROM user_teams WHERE team_id = \\$1 AND user_id = \\$2\\)").
 		WithArgs(1, 10).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+
+	// Mock the query to insert the user into the team
+	mock.ExpectExec("INSERT INTO user_teams \\(user_id, team_id, date_updated\\) VALUES \\(\\$1, \\$2, NOW\\(\\)\\)").
+		WithArgs(10, 1).
 		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// Mock the query to update the team's date_updated field
 	mock.ExpectExec("UPDATE teams SET date_updated = NOW\\(\\) WHERE team_id = \\$1").
 		WithArgs(1).
 		WillReturnResult(sqlmock.NewResult(1, 1))
+
 	mock.ExpectCommit()
 
 	payload := map[string]interface{}{

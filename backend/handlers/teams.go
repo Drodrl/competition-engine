@@ -103,12 +103,16 @@ func AddParticipantsHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			log.Printf("Error decoding payload: %v", err)
 			http.Error(w, "Invalid request payload", http.StatusBadRequest)
 			return
 		}
 
+		log.Printf("Payload received: %+v", payload)
+
 		tx, err := db.Begin()
 		if err != nil {
+			log.Printf("Error starting transaction: %v", err)
 			http.Error(w, "Failed to begin transaction", http.StatusInternalServerError)
 			return
 		}
@@ -116,21 +120,49 @@ func AddParticipantsHandler(db *sql.DB) http.HandlerFunc {
 
 		// Add users to the team
 		for _, userID := range payload.UserIDs {
-			_, err := tx.Exec("INSERT INTO user_teams (team_id, user_id, date_updated) VALUES ($1, $2, NOW())", payload.TeamID, userID)
+			// Check if the user exists in the users table
+			var exists bool
+			err := tx.QueryRow("SELECT EXISTS (SELECT 1 FROM users WHERE id_user = $1)", userID).Scan(&exists)
 			if err != nil {
-				http.Error(w, "Failed to add participants", http.StatusInternalServerError)
+				log.Printf("Error checking if user exists (user_id: %d): %v", userID, err)
+				http.Error(w, "Failed to validate user", http.StatusInternalServerError)
 				return
+			}
+
+			if !exists {
+				log.Printf("User does not exist (user_id: %d)", userID)
+				http.Error(w, "User does not exist", http.StatusBadRequest)
+				return
+			}
+			// Check if the user is already in the team
+			exists = false
+			err = tx.QueryRow("SELECT EXISTS (SELECT 1 FROM user_teams WHERE team_id = $1 AND user_id = $2)", payload.TeamID, userID).Scan(&exists)
+			if err != nil {
+				log.Printf("Error checking if user exists (team_id: %d, user_id: %d): %v", payload.TeamID, userID, err)
+				http.Error(w, "Failed to check existing participants", http.StatusInternalServerError)
+				return
+			}
+
+			if !exists {
+				_, err := tx.Exec("INSERT INTO user_teams (user_id, team_id, date_updated) VALUES ($1, $2, NOW())", userID, payload.TeamID)
+				if err != nil {
+					log.Printf("Error inserting user (team_id: %d, user_id: %d): %v", payload.TeamID, userID, err)
+					http.Error(w, "Failed to add participants", http.StatusInternalServerError)
+					return
+				}
 			}
 		}
 
 		// Update the date_updated field in the teams table
 		_, err = tx.Exec("UPDATE teams SET date_updated = NOW() WHERE team_id = $1", payload.TeamID)
 		if err != nil {
+			log.Printf("Error updating team date (team_id: %d): %v", payload.TeamID, err)
 			http.Error(w, "Failed to update team date", http.StatusInternalServerError)
 			return
 		}
 
 		if err := tx.Commit(); err != nil {
+			log.Printf("Error committing transaction: %v", err)
 			http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
 			return
 		}

@@ -9,7 +9,7 @@ interface Team {
 }
 
 interface User {
-  user_id: number;
+  id_user: number;
   name_user: string;
   lname1_user: string;
   remove?: boolean; // mark user to be removed
@@ -60,19 +60,19 @@ export class TeamManageComponent {
 
 
   openEditModal(team: any) {
-    this.selectedTeam = team;
+    this.selectedTeam = { ...team, participants: team.participants || [] };
     this.showEditModal = true;
 
     this.http.get<User[]>(`/api/team-participants?team_id=${team.team_id}`).subscribe({
         next: (data: User[]) => {
-        this.users = data.map(user => ({
-            ...user,
-            remove: false 
-        }));
+          this.users = data.map(user => ({
+              ...user,
+              remove: false 
+          }));
         },
         error: (err: any) => {
-        const errorMessage = err.error?.message || 'Failed to fetch participants';
-        alert(errorMessage);
+          const errorMessage = err.error?.message || 'Failed to fetch participants';
+          alert(errorMessage);
         }
     });
   }
@@ -88,10 +88,10 @@ export class TeamManageComponent {
 
     this.http.get<User[]>('/api/handlers/athletes').subscribe({
         next: (data: User[]) => {
-        this.athletes = data.map(athlete => ({
-            ...athlete,
-            add: false 
-        }));
+          this.athletes = data.map(athlete => ({
+              ...athlete,
+              add: false 
+          }));
         },
         error: (err: any) => {
         const errorMessage = err.error?.message || 'Failed to fetch athletes';
@@ -106,59 +106,82 @@ export class TeamManageComponent {
     this.athletes = [];
   }
 
-  addParticipants() {
-    const selectedAthletes = this.athletes.filter(athlete => athlete.add);
-    this.users = [...this.users, ...selectedAthletes.map(athlete => ({
-      user_id: athlete.user_id,
-      name_user: athlete.name_user,
-      lname1_user: athlete.lname1_user,
-      remove: false
-    }))];
-    this.closeAddModal();
+addParticipants() {
+  const selectedAthletes = this.athletes.filter(athlete => athlete.add);
+
+  this.users = [...this.users, ...selectedAthletes.map(athlete => ({
+    id_user: athlete.id_user, 
+    name_user: athlete.name_user,
+    lname1_user: athlete.lname1_user,
+    remove: false
+  }))];
+
+
+  this.closeAddModal();
+}
+
+  updateTeam() {
+      if (!this.selectedTeam) return;
+
+      const participants = this.selectedTeam.participants || [];
+
+      const usersToRemove = this.users
+        .filter(user => user.remove)
+        .map(user => user.id_user);
+
+      const usersToAdd = this.users
+        .filter(user => !user.remove) 
+        .filter(user => !participants.some((p: User) => p.id_user === user.id_user)) 
+        .map(user => user.id_user) 
+        .filter(userId => userId);
+
+      if (usersToRemove.length > 0) {
+          this.http.post('/api/remove-participants', { team_id: this.selectedTeam.team_id, user_ids: usersToRemove }).subscribe({
+          next: () => {
+              alert('Participants removed successfully');
+          },
+          error: (err: any) => {
+              const errorMessage = err.error?.message || 'Failed to remove participants';
+              alert(errorMessage);
+          }
+          });
+      }
+
+      if (usersToAdd.length > 0) {
+          this.http.post('/api/add-participants', { team_id: this.selectedTeam.team_id, user_ids: usersToAdd }).subscribe({
+          next: () => {
+              alert('Participants added successfully');
+          },
+          error: (err: any) => {
+              const errorMessage = err.error?.message || 'Failed to add participants';
+              alert(errorMessage);
+          }
+          });
+      }
+
+      this.closeEditModal();
+      this.fetchTeams();
   }
 
-    updateTeam() {
-        if (!this.selectedTeam) return;
-
-        const usersToRemove = this.users.filter(user => user.remove).map(user => user.user_id);
-        const usersToAdd = this.athletes.filter(athlete => athlete.add).map(athlete => athlete.user_id);
-
-        if (usersToRemove.length > 0) {
-            this.http.post('/api/remove-participants', { team_id: this.selectedTeam.team_id, user_ids: usersToRemove }).subscribe({
-            next: () => {
-                console.log('Participants removed successfully');
-            },
-            error: (err: any) => {
-                const errorMessage = err.error?.message || 'Failed to remove participants';
-                alert(errorMessage);
-            }
-            });
-        }
-
-        if (usersToAdd.length > 0) {
-            this.http.post('/api/add-participants', { team_id: this.selectedTeam.team_id, user_ids: usersToAdd }).subscribe({
-            next: () => {
-                console.log('Participants added successfully');
-            },
-            error: (err: any) => {
-                const errorMessage = err.error?.message || 'Failed to add participants';
-                alert(errorMessage);
-            }
-            });
-        }
-
-        this.closeEditModal();
-        this.fetchTeams(); // Refresh the team list
-    }
-
   leaveTeam(teamId: number) {
-    if (confirm('Are you sure you want to leave this team?')) {
-      // Replace with API call to leave the team
-      console.log('Leaving team:', teamId);
 
-      // Remove the team from the list
-    //   this.teams = this.teams.filter(team => team.team_id !== teamId);
+    if (confirm('Are you sure you want to leave this team?')) {
+      const payload = {
+        team_id: teamId,
+        user_ids: [this.userId] 
+      };
+
+      this.http.post('/api/remove-participants', payload).subscribe({
+        next: () => {
+          this.teams = this.teams.filter(team => team.team_id !== teamId);
+        },
+        error: (err: any) => {
+          const errorMessage = err.error?.message || 'Failed to leave the team';
+          alert(errorMessage);
+        }
+      });
     }
+  
   }
 
   editTeam(teamId: number) {
@@ -169,7 +192,6 @@ export class TeamManageComponent {
         return;
     }
 
-    // Open the edit modal with the selected team
     this.openEditModal(team);
   }
 
