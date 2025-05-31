@@ -33,7 +33,7 @@ export class CompetitionSignupComponent implements OnInit {
 
   ngOnInit() {
     this.userId = Number(sessionStorage.getItem('userId'));
-    this.http.get<Competition[]>('/api/competitions').subscribe((data: any) => {
+    this.http.get<Competition[]>('/api/competitions/flag_teams/false').subscribe((data: any) => {
       this.competitions = data;
     });
     this.http.get<Sport[]>('/api/sports').subscribe((data: any) => {

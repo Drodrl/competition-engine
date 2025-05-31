@@ -36,14 +36,16 @@ describe('TeamSignupComponent', () => {
     fixture.detectChanges();
 
     // Mock competitions
-    const req1 = httpMock.expectOne('/api/competitions');
+    const req1 = httpMock.expectOne('/api/competitions/flag_teams/true');
     expect(req1.request.method).toBe('GET');
-    req1.flush([{ competition_id: 1, competition_name: 'Comp', sport_id: 2, start_date: new Date() }]);
+    // req1.flush([{ competition_id: 1, competition_name: 'Comp', sport_id: 2, start_date: new Date() }]);
+    req1.flush([]);
 
     // Mock sports
     const req2 = httpMock.expectOne('/api/sports');
     expect(req2.request.method).toBe('GET');
-    req2.flush([{ id: 2, name: 'Soccer' }]);
+    // req2.flush([{ id: 2, name: 'Soccer' }]);
+    req2.flush([]);
 
     tick();
     expect(component.competitions.length).toBe(1);
