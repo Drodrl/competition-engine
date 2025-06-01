@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
   selector: 'app-athlete-dashboard',
   standalone: true,
   templateUrl: './athlete-dashboard.component.html',
+  styleUrls: ['./athlete-dashboard.component.scss'],
   imports: [RouterModule],
 })
 export class AthleteDashboardComponent {}
