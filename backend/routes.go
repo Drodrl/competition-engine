@@ -60,6 +60,10 @@ func NewRouter(db *sql.DB) http.Handler {
 	router.Handle("/api/remove-participants", EnableCORS(handlers.RemoveParticipantsHandler(db)))
 	router.Handle("/api/add-participants", EnableCORS(handlers.AddParticipantsHandler(db)))
 
+	// --- Athlete Stats ---
+	router.Handle("/api/athletes/{userId}/stats", EnableCORS(http.HandlerFunc(handlers.GetAthleteStats))).Methods("GET")
+	router.Handle("/api/athletes/{userId}/competitions", EnableCORS(http.HandlerFunc(handlers.GetAthleteCompetitions))).Methods("GET")
+
 	// --- Other Handlers ---
 	router.Handle("/api/handlers/athletes", EnableCORS(handlers.NewAthletesHandler(db))).Methods("GET", "POST")
 	router.Handle("/api/handlers/teams", EnableCORS(handlers.NewTeamsHandler(db))).Methods("GET", "POST")

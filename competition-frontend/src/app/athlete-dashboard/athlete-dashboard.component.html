@@ -10,7 +10,61 @@
     </div>
 
 
-  <div class="athlete-performance">
+  <div *ngIf="loading">Loading statistics...</div>
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <div class="athlete-performance" *ngIf="stats && !loading">
     <h2>Performance Statistics</h2>
     
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Win Rate</h3>
+        <div class="stat-value">{{ stats.winPercentage }}%</div>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Competitions Won</h3>
+        <div class="stat-value">{{ stats.competitionsWon }}</div>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Total Competitions</h3>
+        <div class="stat-value">{{ stats.totalCompetitions }}</div>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Ongoing Competitions</h3>
+        <div class="stat-value">{{ stats.ongoingCompetitions }}</div>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Upcoming Competitions</h3>
+        <div class="stat-value">{{ stats.upcomingCompetitions }}</div>
+      </div>
+    </div>
   </div>
+  
+  <div class="my-competitions" *ngIf="competitions.length > 0">
+    <h2>My Competitions</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Competition Name</th>
+          <th>Sport</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let comp of competitions">
+          <td>{{ comp.competition_name }}</td>
+          <td>{{ comp.sport_name }}</td>
+          <td>{{ comp.start_date | date:'yyyy-MM-dd' }}</td>
+          <td>{{ comp.end_date ? (comp.end_date | date:'yyyy-MM-dd') : '-' }}</td>
+          <td>{{ getStatusLabel(comp.status) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
