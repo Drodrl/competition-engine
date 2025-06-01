@@ -1,6 +1,7 @@
-<h1>Create a team</h1>
-
-<button (click)="goToAthleteDashboard()">Back</button>
+<div class="header">
+  <h1>Create a team</h1>
+  <button (click)="goToAthleteDashboard()" class="back-button">Back</button>
+</div>
 
 <form [formGroup]="teamForm" (ngSubmit)="onSubmit()">
   <label>

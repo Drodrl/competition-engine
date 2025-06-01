@@ -14,7 +14,7 @@ interface User {
   selector: 'app-team-create',
   standalone: true,
   templateUrl: './team-create.component.html',
-//   styleUrls: ['./team-create.component.scss']
+  styleUrls: ['./team-create.component.scss'],
   imports: [CommonModule, RouterModule, ReactiveFormsModule],
 })
 
