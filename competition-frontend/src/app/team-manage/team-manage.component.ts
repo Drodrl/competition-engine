@@ -197,6 +197,6 @@ addParticipants() {
   }
 
   goToAthleteDashboard() {
-    this.router.navigate(['/athlete-dashboard']); // Replace with the actual route for the athlete dashboard
+    this.router.navigate(['/athlete-dashboard']); 
   }
 }
