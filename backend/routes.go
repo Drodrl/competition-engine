@@ -68,6 +68,10 @@ func NewRouter(db *sql.DB) http.Handler {
 	router.Handle("/handlers/team_create", EnableCORS(handlers.NewTeamCreateHandler(db))).Methods("POST")
 	router.Handle("/api/handlers/competitions", EnableCORS(handlers.NewUserSignupHandler(db))) // If needed
 
+	// --- Public API ---
+	router.Handle("/api/public/competitions", EnableCORS(http.HandlerFunc(handlers.GetPublicCompetitions))).Methods("GET")
+	router.Handle("/api/public/competitions/{competitionId}/results", EnableCORS(http.HandlerFunc(handlers.GetPublicCompetitionResults))).Methods("GET")
+
 	// --- Static Files ---
 	staticContent, err := fs.Sub(staticFiles, "static/browser")
 	if err != nil {
