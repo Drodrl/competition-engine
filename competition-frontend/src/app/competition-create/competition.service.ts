@@ -124,4 +124,9 @@ export class CompetitionService {
   finishCompetition(competitionId: number) {
     return this.http.post<{finished: boolean, winner?: any}>(`/api/competitions/${competitionId}/finish`, {});
   }
+
+  getAllCompetitions(): Observable<any[]> {
+    return this.http.get<any[]>('/api/competitions');
+  }
+
 }
