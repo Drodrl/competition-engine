@@ -53,18 +53,15 @@ func DeleteCompetition(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "Invalid competition ID", http.StatusBadRequest)
 		return
 	}
-	_, err = db.Exec(`DELETE FROM competitions WHERE competition_id = $1`, id)
-	if err != nil {
+	if _, err = db.Exec(`DELETE FROM competitions WHERE competition_id = $1`, id); err != nil {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	_, err = db.Exec(`DELETE FROM competition_stages WHERE competition_id = $1`, id)
-	if err != nil {
+	if _, err = db.Exec(`DELETE FROM competition_stages WHERE competition_id = $1`, id); err != nil {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	_, err = db.Exec(`DELETE FROM competition_participants WHERE competition_id = $1`, id)
-	if err != nil {
+	if _, err = db.Exec(`DELETE FROM competition_participants WHERE competition_id = $1`, id); err != nil {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -89,12 +86,15 @@ func GetCompetitionsByOrganizer(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("rows.Close error: %v", err)
+		}
+	}()
 	var competitions []models.Competition
 	for rows.Next() {
 		var c models.Competition
-		err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams)
-		if err != nil {
+		if err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams); err != nil {
 			sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -145,7 +145,7 @@ func GetCompetitionByID(w http.ResponseWriter, r *http.Request) {
 	if c.Status == 3 {
 		// Competition finished, fetch winner
 		var winnerName, teamName string
-		db.QueryRow(`
+		_ = db.QueryRow(`
             SELECT u.name_user, t.team_name
             FROM matches m
             JOIN rounds r ON m.round_id = r.round_id
@@ -166,7 +166,9 @@ func GetCompetitionByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		log.Printf("encode error: %v", err)
+	}
 }
 
 // PUT /api/competitions/{competitionId}
@@ -189,12 +191,11 @@ func UpdateCompetition(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
-	_, err = db.Exec(`
+	if _, err = db.Exec(`
         UPDATE competitions
         SET competition_name = $1, start_date = $2, end_date = $3, max_participants = $4, flag_teams = $5, date_updated = $6
         WHERE competition_id = $7
-    `, req.CompetitionName, req.StartDate, req.EndDate, req.MaxParticipants, req.FlagTeams, time.Now(), id)
-	if err != nil {
+    `, req.CompetitionName, req.StartDate, req.EndDate, req.MaxParticipants, req.FlagTeams, time.Now(), id); err != nil {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -255,26 +256,24 @@ func ChangeCompetitionStatus(w http.ResponseWriter, r *http.Request) {
             SELECT $1, user_id FROM competition_participants WHERE competition_id = $2 AND user_id IS NOT NULL
             ON CONFLICT DO NOTHING
         `, firstStageID, id)
-		count, _ := res.RowsAffected()
-		log.Printf("Inserted %d user participants into stage_participants", count)
 		if err != nil {
 			sendJSONError(w, "Failed to insert users into stage_participants: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+		count, _ := res.RowsAffected()
+		log.Printf("Inserted %d user participants into stage_participants", count)
 		// Insert teams
-		_, err = db.Exec(`
+		if _, err = db.Exec(`
             INSERT INTO stage_participants (stage_id, team_id)
             SELECT $1, team_id FROM competition_participants WHERE competition_id = $2 AND team_id IS NOT NULL
             ON CONFLICT DO NOTHING
-        `, firstStageID, id)
-		if err != nil {
+        `, firstStageID, id); err != nil {
 			sendJSONError(w, "Failed to insert teams into stage_participants: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
 
-	_, err = db.Exec(`UPDATE competitions SET status = $1, date_updated = $2 WHERE competition_id = $3`, req.Status, time.Now(), id)
-	if err != nil {
+	if _, err = db.Exec(`UPDATE competitions SET status = $1, date_updated = $2 WHERE competition_id = $3`, req.Status, time.Now(), id); err != nil {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -320,7 +319,11 @@ func getCompetitionStages(competitionID int) ([]models.StageDTO, error) {
 	if err != nil {
 		return nil, errors.New("DB error: " + err.Error())
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("rows.Close error: %v", err)
+		}
+	}()
 	var stages []models.StageDTO
 	for rows.Next() {
 		var s models.StageDTO
@@ -338,7 +341,11 @@ func getTournamentFormatMinimums() (map[int]int, error) {
 	if err != nil {
 		return nil, errors.New("DB error: " + err.Error())
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("rows.Close error: %v", err)
+		}
+	}()
 	formatMin := make(map[int]int)
 	for rows.Next() {
 		var id, min int
@@ -352,8 +359,7 @@ func getTournamentFormatMinimums() (map[int]int, error) {
 
 func getCompetitionMaxParticipants(competitionID int) (int, error) {
 	var maxParticipants int
-	err := db.QueryRow(`SELECT max_participants FROM competitions WHERE competition_id = $1`, competitionID).Scan(&maxParticipants)
-	if err != nil {
+	if err := db.QueryRow(`SELECT max_participants FROM competitions WHERE competition_id = $1`, competitionID).Scan(&maxParticipants); err != nil {
 		return 0, errors.New("DB error: " + err.Error())
 	}
 	return maxParticipants, nil
@@ -366,8 +372,7 @@ func canCloseSignup(competitionID int) error {
 		return err
 	}
 	var numParticipants int
-	err = db.QueryRow(`SELECT COUNT(*) FROM competition_participants WHERE competition_id = $1`, competitionID).Scan(&numParticipants)
-	if err != nil {
+	if err := db.QueryRow(`SELECT COUNT(*) FROM competition_participants WHERE competition_id = $1`, competitionID).Scan(&numParticipants); err != nil {
 		return errors.New("DB error: " + err.Error())
 	}
 	if numParticipants < maxParticipants {
@@ -410,7 +415,11 @@ func GetStagesByCompetitionID(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("rows.Close error: %v", err)
+		}
+	}()
 	var stages []models.StageDTO
 	for rows.Next() {
 		var s models.StageDTO
@@ -451,11 +460,10 @@ func AddStageToCompetition(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	_, err = db.Exec(`
+	if _, err = db.Exec(`
         INSERT INTO competition_stages (competition_id, stage_order, stage_name, tourney_format_id, participants_at_start, participants_at_end)
         VALUES ($1, $2, $3, $4, $5, $6)
-    `, competitionID, stage.StageOrder, stage.StageName, stage.TourneyFormatID, stage.ParticipantsAtStart, stage.ParticipantsAtEnd)
-	if err != nil {
+    `, competitionID, stage.StageOrder, stage.StageName, stage.TourneyFormatID, stage.ParticipantsAtStart, stage.ParticipantsAtEnd); err != nil {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -505,12 +513,11 @@ func UpdateStage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.Exec(`
+	if _, err = db.Exec(`
         UPDATE competition_stages
         SET stage_name = $1, stage_order = $2, tourney_format_id = $3, participants_at_start = $4, participants_at_end = $5
         WHERE stage_id = $6
-    `, stage.StageName, stage.StageOrder, stage.TourneyFormatID, stage.ParticipantsAtStart, stage.ParticipantsAtEnd, stageID)
-	if err != nil {
+    `, stage.StageName, stage.StageOrder, stage.TourneyFormatID, stage.ParticipantsAtStart, stage.ParticipantsAtEnd, stageID); err != nil {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -526,8 +533,7 @@ func DeleteStage(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "Invalid stage ID", http.StatusBadRequest)
 		return
 	}
-	_, err = db.Exec(`DELETE FROM competition_stages WHERE stage_id = $1`, stageID)
-	if err != nil {
+	if _, err = db.Exec(`DELETE FROM competition_stages WHERE stage_id = $1`, stageID); err != nil {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -559,7 +565,11 @@ func GetParticipantsByCompetitionID(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("rows.Close error: %v", err)
+		}
+	}()
 
 	type Participant struct {
 		ID       int     `json:"id"`
@@ -605,12 +615,11 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
 
 	// 2. Check all matches in last stage are finished
 	var unfinished int
-	err = db.QueryRow(`
+	if err = db.QueryRow(`
         SELECT COUNT(*) FROM matches m
         JOIN rounds r ON m.round_id = r.round_id
         WHERE r.stage_id = $1 AND m.completed_at IS NULL
-    `, lastStageID).Scan(&unfinished)
-	if err != nil {
+    `, lastStageID).Scan(&unfinished); err != nil {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -621,26 +630,24 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
 
 	// 3. Find the last round in the last stage
 	var lastRoundID int
-	err = db.QueryRow(`
+	if err = db.QueryRow(`
         SELECT round_id FROM rounds
         WHERE stage_id = $1
         ORDER BY round_number DESC LIMIT 1
-    `, lastStageID).Scan(&lastRoundID)
-	if err != nil {
+    `, lastStageID).Scan(&lastRoundID); err != nil {
 		sendJSONError(w, "No rounds found in last stage", http.StatusBadRequest)
 		return
 	}
 
 	// 4. Find the winner(s) in the last match of the last round
 	var winnerUserID, winnerTeamID sql.NullInt64
-	err = db.QueryRow(`
+	if err = db.QueryRow(`
         SELECT mp.user_id, mp.team_id
         FROM matches m
         JOIN match_participants mp ON mp.match_id = m.match_id
         WHERE m.round_id = $1 AND mp.is_winner = true
         LIMIT 1
-    `, lastRoundID).Scan(&winnerUserID, &winnerTeamID)
-	if err != nil {
+    `, lastRoundID).Scan(&winnerUserID, &winnerTeamID); err != nil {
 		sendJSONError(w, "No winner found in last round", http.StatusBadRequest)
 		return
 	}
@@ -654,8 +661,7 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 5. Update competition status
-	_, err = db.Exec(`UPDATE competitions SET status = 3 WHERE competition_id = $1`, competitionID)
-	if err != nil {
+	if _, err = db.Exec(`UPDATE competitions SET status = 3 WHERE competition_id = $1`, competitionID); err != nil {
 		sendJSONError(w, "Failed to update competition status: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -669,7 +675,9 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
 			"team_name": teamName,
 		},
 	}
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		log.Printf("encode error: %v", err)
+	}
 }
 
 // GET /api/competitions
@@ -683,12 +691,15 @@ func GetAllCompetitions(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("rows.Close error: %v", err)
+		}
+	}()
 	var competitions []models.Competition
 	for rows.Next() {
 		var c models.Competition
-		err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams)
-		if err != nil {
+		if err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams); err != nil {
 			sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -720,13 +731,16 @@ func GetCompetitionsByFlagTeams(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("rows.Close error: %v", err)
+		}
+	}()
 
 	var competitions []models.Competition
 	for rows.Next() {
 		var c models.Competition
-		err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams)
-		if err != nil {
+		if err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams); err != nil {
 			sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -782,6 +796,8 @@ func validateStagesBusinessRules(competitionID int, stages []models.StageDTO, ma
 
 func getFormatMinParticipants(formatID int) (int, error) {
 	var min int
-	err := db.QueryRow(`SELECT minimum_participants FROM tournament_formats WHERE tourney_format_id = $1`, formatID).Scan(&min)
-	return min, err
+	if err := db.QueryRow(`SELECT minimum_participants FROM tournament_formats WHERE tourney_format_id = $1`, formatID).Scan(&min); err != nil {
+		return 0, err
+	}
+	return min, nil
 }
