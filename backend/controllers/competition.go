@@ -48,7 +48,12 @@ func GenerateRoundRobin(db *sql.DB, stageID int) error {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer func() {
-		if err != nil {
+		if p := recover(); p != nil {
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
+			panic(p)
+		} else if err != nil {
 			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
 				log.Printf("rollback error: %v", rbErr)
 			}
@@ -110,9 +115,9 @@ func GenerateRoundRobin(db *sql.DB, stageID int) error {
 	return nil
 }
 
-func GenerateRoundSingleElim(db *sql.DB, stageID int) error {
+func GenerateRoundSingleElim(db *sql.DB, stageID int) (err error) {
 	var nextRound int
-	err := db.QueryRow(
+	err = db.QueryRow(
 		`SELECT COALESCE(MAX(round_number), 0) + 1 FROM rounds WHERE stage_id = $1`,
 		stageID,
 	).Scan(&nextRound)
@@ -164,12 +169,17 @@ func GenerateRoundSingleElim(db *sql.DB, stageID int) error {
 		return fmt.Errorf("expected even participants, got %d", N)
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		return err
+	tx, txErr := db.Begin()
+	if txErr != nil {
+		return txErr
 	}
 	defer func() {
-		if err != nil {
+		if p := recover(); p != nil {
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
+			panic(p)
+		} else if err != nil {
 			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
 				log.Printf("rollback error: %v", rbErr)
 			}
@@ -192,7 +202,9 @@ func GenerateRoundSingleElim(db *sql.DB, stageID int) error {
 			`INSERT INTO matches (round_id, scheduled_at) VALUES ($1, NOW()) RETURNING match_id`,
 			roundID,
 		).Scan(&matchID); err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
 			return fmt.Errorf("failed to insert match: %w", err)
 		}
 
@@ -204,7 +216,9 @@ func GenerateRoundSingleElim(db *sql.DB, stageID int) error {
 			b.UserID, b.TeamID,
 		)
 		if err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
 			return fmt.Errorf("failed to insert match participants: %w", err)
 		}
 	}
@@ -215,13 +229,18 @@ func GenerateRoundSingleElim(db *sql.DB, stageID int) error {
 	return nil
 }
 
-func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
+func GenerateRoundDoubleElim(db *sql.DB, stageID int) (err error) {
+	tx, txErr := db.Begin()
+	if txErr != nil {
+		return txErr
 	}
 	defer func() {
-		if err != nil {
+		if p := recover(); p != nil {
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
+			panic(p)
+		} else if err != nil {
 			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
 				log.Printf("rollback error: %v", rbErr)
 			}
@@ -233,14 +252,18 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 		`SELECT COALESCE(MAX(round_number), 0) + 1 FROM rounds WHERE stage_id = $1 AND bracket = 'W'`,
 		stageID,
 	).Scan(&nextWinnersRound); err != nil {
-		tx.Rollback()
+		if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+			log.Printf("rollback error: %v", rbErr)
+		}
 		return fmt.Errorf("failed to get next winners round: %w", err)
 	}
 	if err := tx.QueryRow(
 		`SELECT COALESCE(MAX(round_number), 0) + 1 FROM rounds WHERE stage_id = $1 AND bracket = 'L'`,
 		stageID,
 	).Scan(&nextLosersRound); err != nil {
-		tx.Rollback()
+		if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+			log.Printf("rollback error: %v", rbErr)
+		}
 		return fmt.Errorf("failed to get next losers round: %w", err)
 	}
 
@@ -251,14 +274,18 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 			stageID,
 		)
 		if err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
 			return err
 		}
 		defer winnersRows.Close()
 		for winnersRows.Next() {
 			var e entrant
 			if err := winnersRows.Scan(&e.UserID, &e.TeamID); err != nil {
-				tx.Rollback()
+				if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+					log.Printf("rollback error: %v", rbErr)
+				}
 				return fmt.Errorf("failed to scan winners: %w", err)
 			}
 			winners = append(winners, e)
@@ -273,14 +300,18 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 			stageID, nextWinnersRound-1,
 		)
 		if err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
 			return err
 		}
 		defer winnersRows.Close()
 		for winnersRows.Next() {
 			var e entrant
 			if err := winnersRows.Scan(&e.UserID, &e.TeamID); err != nil {
-				tx.Rollback()
+				if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+					log.Printf("rollback error: %v", rbErr)
+				}
 				return fmt.Errorf("failed to scan winners: %w", err)
 			}
 			winners = append(winners, e)
@@ -305,14 +336,18 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 			stageID, nextWinnersRound-1, nextLosersRound-1,
 		)
 		if err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
 			return err
 		}
 		defer losersRows.Close()
 		for losersRows.Next() {
 			var e entrant
 			if err := losersRows.Scan(&e.UserID, &e.TeamID); err != nil {
-				tx.Rollback()
+				if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+					log.Printf("rollback error: %v", rbErr)
+				}
 				return fmt.Errorf("failed to scan losers: %w", err)
 			}
 			losers = append(losers, e)
@@ -326,7 +361,9 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 			`INSERT INTO rounds (stage_id, round_number, bracket) VALUES ($1, 1, 'G') RETURNING round_id`,
 			stageID,
 		).Scan(&grandFinalRoundID); err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
 			return fmt.Errorf("failed to insert grand final round: %w", err)
 		}
 		var matchID int
@@ -334,7 +371,9 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 			`INSERT INTO matches (round_id, scheduled_at) VALUES ($1, NOW()) RETURNING match_id`,
 			grandFinalRoundID,
 		).Scan(&matchID); err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
 			return fmt.Errorf("failed to insert grand final match: %w", err)
 		}
 		_, err = tx.Exec(
@@ -345,15 +384,22 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 			losers[0].UserID, losers[0].TeamID,
 		)
 		if err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
 			return fmt.Errorf("failed to insert grand final participants: %w", err)
 		}
-		return tx.Commit()
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+		return nil
 	}
 
 	if Nw > 1 {
 		if Nw%2 != 0 {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
 			return fmt.Errorf("expected even participants in winners bracket, got %d", Nw)
 		}
 		var winnersRoundID int
@@ -361,7 +407,9 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 			`INSERT INTO rounds (stage_id, round_number, bracket) VALUES ($1, $2, 'W') RETURNING round_id`,
 			stageID, nextWinnersRound,
 		).Scan(&winnersRoundID); err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
 			return fmt.Errorf("failed to insert winners round: %w", err)
 		}
 		for i := 0; i < Nw; i += 2 {
@@ -372,7 +420,9 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 				`INSERT INTO matches (round_id, scheduled_at) VALUES ($1, NOW()) RETURNING match_id`,
 				winnersRoundID,
 			).Scan(&matchID); err != nil {
-				tx.Rollback()
+				if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+					log.Printf("rollback error: %v", rbErr)
+				}
 				return fmt.Errorf("failed to insert winners match: %w", err)
 			}
 			_, err = tx.Exec(
@@ -383,7 +433,9 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 				b.UserID, b.TeamID,
 			)
 			if err != nil {
-				tx.Rollback()
+				if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+					log.Printf("rollback error: %v", rbErr)
+				}
 				return fmt.Errorf("failed to insert winners match participants: %w", err)
 			}
 		}
@@ -395,7 +447,9 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 			`INSERT INTO rounds (stage_id, round_number, bracket) VALUES ($1, $2, 'L') RETURNING round_id`,
 			stageID, nextLosersRound,
 		).Scan(&losersRoundID); err != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+				log.Printf("rollback error: %v", rbErr)
+			}
 			return fmt.Errorf("failed to insert losers round: %w", err)
 		}
 		if Nl == 2 {
@@ -406,7 +460,9 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 				`INSERT INTO matches (round_id, scheduled_at) VALUES ($1, NOW()) RETURNING match_id`,
 				losersRoundID,
 			).Scan(&matchID); err != nil {
-				tx.Rollback()
+				if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+					log.Printf("rollback error: %v", rbErr)
+				}
 				return fmt.Errorf("failed to insert losers final match: %w", err)
 			}
 			_, err = tx.Exec(
@@ -417,12 +473,16 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 				b.UserID, b.TeamID,
 			)
 			if err != nil {
-				tx.Rollback()
+				if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+					log.Printf("rollback error: %v", rbErr)
+				}
 				return fmt.Errorf("failed to insert losers final match participants: %w", err)
 			}
 		} else if Nl > 2 {
 			if Nl%2 != 0 {
-				tx.Rollback()
+				if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+					log.Printf("rollback error: %v", rbErr)
+				}
 				return fmt.Errorf("expected even participants in losers bracket, got %d", Nl)
 			}
 			for i := 0; i < Nl; i += 2 {
@@ -433,7 +493,9 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 					`INSERT INTO matches (round_id, scheduled_at) VALUES ($1, NOW()) RETURNING match_id`,
 					losersRoundID,
 				).Scan(&matchID); err != nil {
-					tx.Rollback()
+					if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+						log.Printf("rollback error: %v", rbErr)
+					}
 					return fmt.Errorf("failed to insert losers match: %w", err)
 				}
 				_, err = tx.Exec(
@@ -444,7 +506,9 @@ func GenerateRoundDoubleElim(db *sql.DB, stageID int) error {
 					b.UserID, b.TeamID,
 				)
 				if err != nil {
-					tx.Rollback()
+					if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+						log.Printf("rollback error: %v", rbErr)
+					}
 					return fmt.Errorf("failed to insert losers match participants: %w", err)
 				}
 			}
