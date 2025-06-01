@@ -1,4 +1,7 @@
 <h1>Create a team</h1>
+
+<button (click)="goToAthleteDashboard()">Back</button>
+
 <form [formGroup]="teamForm" (ngSubmit)="onSubmit()">
   <label>
     Team Name:
@@ -14,9 +17,9 @@
     </thead>
     <tbody>
       <tr *ngFor="let user of users">
-        <td><input type="checkbox" [value]="user.id" (change)="onUserSelect($event, user.id)"></td>
-        <td>{{ user.first_name }}</td>
-        <td>{{ user.last_name }}</td>
+          <td><input type="checkbox" [value]="user.id_user" (change)="onUserSelect($event, user.id_user)"></td>
+          <td>{{ user.name_user }}</td>
+          <td>{{ user.lname1_user }}</td>
       </tr>
     </tbody>
   </table>

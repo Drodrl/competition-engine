@@ -600,3 +600,75 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"finished":true}`))
 }
+
+// GET /api/competitions
+func GetAllCompetitions(w http.ResponseWriter, r *http.Request) {
+	rows, err := db.Query(`
+        SELECT competition_id, competition_name, sport_id, start_date, end_date, max_participants, organizer_id, status, date_created, date_updated, flag_teams
+        FROM competitions
+        ORDER BY date_created DESC
+    `)
+	if err != nil {
+		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	var competitions []models.Competition
+	for rows.Next() {
+		var c models.Competition
+		err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams)
+		if err != nil {
+			http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		competitions = append(competitions, c)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(competitions); err != nil {
+		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// GET /api/competitions/flag_teams/{flagTeams}
+func GetCompetitionsByFlagTeams(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 5 {
+		http.Error(w, "Flag teams value required", http.StatusBadRequest)
+		return
+	}
+
+	flagTeams := parts[4]
+	isTeamCompetition, err := strconv.ParseBool(flagTeams)
+	if err != nil {
+		http.Error(w, "Invalid flag teams value", http.StatusBadRequest)
+		return
+	}
+
+	rows, err := db.Query(`
+        SELECT competition_id, competition_name, sport_id, start_date, end_date, max_participants, organizer_id, status, date_created, date_updated, flag_teams
+        FROM competitions
+        WHERE flag_teams = $1
+        ORDER BY date_created DESC
+    `, isTeamCompetition)
+	if err != nil {
+		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var competitions []models.Competition
+	for rows.Next() {
+		var c models.Competition
+		err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams)
+		if err != nil {
+			http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		competitions = append(competitions, c)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(competitions); err != nil {
+		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+	}
+}

@@ -10,6 +10,7 @@ import { TeamCreateComponent } from './team-create/team-create.component';
 import { TeamSignupComponent } from './team-signup/team-signup.component';  
 import { ManageCompetitionComponent } from './manage-competition/manage-competition.component';
 import { ManageStageComponent } from './manage-stage/manage-stage.component';
+import { TeamManageComponent } from './team-manage/team-manage.component';
 
 export const appRoutes: Routes = [
   { path: '', redirectTo: 'login-page', pathMatch: 'full' }, // Redirect root to login
@@ -23,5 +24,6 @@ export const appRoutes: Routes = [
   { path: 'team-create', component: TeamCreateComponent },
   { path: 'team-signup', component: TeamSignupComponent },
   { path: 'manage-competition/:id', component: ManageCompetitionComponent},
-  { path: 'manage-competition/:id/stage/:stageId', component: ManageStageComponent }
+  { path: 'manage-competition/:id/stage/:stageId', component: ManageStageComponent },
+  { path: 'team-manage', component: TeamManageComponent },
 ];

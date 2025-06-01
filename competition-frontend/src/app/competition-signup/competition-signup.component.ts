@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 
@@ -12,6 +12,11 @@ interface Competition {
   status?: number;
 }
 
+interface Sport {
+  id: number;
+  name: string;
+}
+
 @Component({
   selector: 'app-competition-signup',
   standalone: true,
@@ -21,19 +26,36 @@ interface Competition {
 
 export class CompetitionSignupComponent implements OnInit {
   competitions: Competition[] = [];
+  sports: Sport[] = [];
   userId: number | null = null;
   sports: { id: number; name: string }[] = [];
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit() {
     this.userId = Number(sessionStorage.getItem('userId'));
-    this.http.get<Competition[]>('/api/handlers/competitions').subscribe((data: any) => {
-      this.competitions = data;
+    this.http.get<Competition[]>('/api/competitions/flag_teams/false').subscribe((data: any) => {
+      this.competitions = data.filter((competition: Competition) => competition.status == 1 || competition.status == 2);
     });
-    this.http.get<{ id: number; name: string }[]>('/api/sports').subscribe((data: any) => {
+    this.http.get<Sport[]>('/api/sports').subscribe((data: any) => {
       this.sports = data;
     });
+  }
+
+  getSportName(sportId: number | string | null | undefined): string {
+    if (sportId === null || sportId === undefined) return String(sportId);
+    if (!this.sports) return String(sportId);
+    const sport = this.sports.find(s => s.id === Number(sportId));
+    return sport ? sport.name : String(sportId);
+  }
+
+  getCompStatus(competition: Competition | null | undefined): string {
+    if (!competition || !this.competitions) return "Unknown";
+    const found = this.competitions.find(c => c.competition_id === competition.competition_id);
+    const status = found?.status ?? competition.status;
+    if (status === 1) return "Open";
+    if (status === 2) return "Closed";
+    return "Draft";
   }
 
   signUp(competitionId: number) {
@@ -52,15 +74,7 @@ export class CompetitionSignupComponent implements OnInit {
     });
   }
 
-  getSportName(sportId: number): string {
-    const sport = this.sports.find(s => s.id === sportId);
-    return sport ? sport.name : sportId.toString();
-  }
-
-  getCompStatus(competition: Competition): string {
-    const status = this.competitions.find(c => c.competition_id === competition.competition_id)?.status;
-    if (status === 1) return "Open";
-    if (status === 0) return "Closed";
-    return "Unknown";
+  goToAthleteDashboard() {
+    this.router.navigate(['/athlete-dashboard']);
   }
 }
