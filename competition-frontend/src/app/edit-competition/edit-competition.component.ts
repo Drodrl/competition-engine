@@ -94,99 +94,35 @@ export class EditCompetitionComponent implements OnInit {
     const prevMaxParticipants = this.stages.length > 0 ? this.stages[0].participants_at_start : null;
     const newMaxParticipants = this.form.value.max_participants;
 
-    if (!this.checkCompetition()) return;
-    if (!this.checkStages(newMaxParticipants)) return;
-    
     if (prevMaxParticipants !== null && prevMaxParticipants !== newMaxParticipants) {
       // Update first stage
       const firstStage = { ...this.stages[0], participants_at_start: newMaxParticipants };
       this.svc.updateStage(this.competitionId, firstStage.stage_id!, firstStage).subscribe({
-          next: () => {
-            this.loadStages();
-            this.editStageDialogOpen = false;
-          },
-          error: err => {
-            alert('Error updating previous stage: ' + (err.error || err.message));
-            this.loadStages();
-            this.editStageDialogOpen = false;
-          }
+        next: () => {
+          this.loadStages();
+          this.editStageDialogOpen = false;
+        },
+        error: err => {
+          alert('Error updating previous stage: ' + (err.error?.error || err.error || err.message));
+          this.loadStages();
+          this.editStageDialogOpen = false;
+        }
       });
-  
+
       this.svc.updateCompetition(this.competitionId, payload).subscribe({
         next: () => {
           alert('Competition and stages updated successfully!');
           this.loadStages();
         },
-        error: err => alert('Error updating competition: ' + (err.error || err.message))
+        error: err => alert('Error updating competition: ' + (err.error?.error || err.error || err.message))
       });
-     
+
     } else {
-      // No change in max_participants, just update competition
       this.svc.updateCompetition(this.competitionId, payload).subscribe({
         next: () => alert('Competition updated successfully!'),
-        error: err => alert('Error updating competition: ' + (err.error || err.message))
+        error: err => alert('Error updating competition: ' + (err.error?.error || err.error || err.message))
       });
     }
-  }
-
-  checkCompetition(): boolean {
-    if (this.form.value.end_date < this.form.value.start_date) {
-      alert('End date cannot be before start date');
-      return false;
-    } else if (this.form.value.start_date < new Date().toISOString().split('T')[0]) {
-      alert('Start date cannot be in the past');
-      return false;
-    } else if (this.form.value.max_participants < 2 || this.form.value.max_participants > 100 || this.form.value.max_participants % 2 !== 0) {
-      alert('Max participants must be an even number between 2 and 100');
-      return false;
-    } else if (this.stages.length === 0) {
-      alert('Please add at least one stage before saving.');
-      return false;
-    }
-    return true;
-  }
-
-  checkStages(max_participants: number): boolean {
-    let prevParticipants = max_participants;
-    for (let i = 0; i < this.stages.length; i++) {
-      const stage = this.stages[i];
-      if (!stage.stage_name || !stage.tourney_format_id || !stage.participants_at_start) {
-        alert('Please fill all required fields for each stage.');
-        return false;
-      }
-      const format = this.tourneyFormats.find(tf => tf.id === stage.tourney_format_id);
-      if (!format) {
-        alert('Please select a valid tournament format for each stage.');
-        return false;
-      }
-      // 1st stage, only one stage: must be single or double elim
-      if (i === 0 && this.stages.length === 1 && !(stage.tourney_format_id === 1 || stage.tourney_format_id === 2)) {
-        alert('If there is only one stage, it must be Single or Double Elimination.');
-        return false;
-      }
-      // 1st stage, two stages: must be RR
-      if (i === 0 && this.stages.length === 2 && stage.tourney_format_id !== 3) {
-        alert('If there are two stages, the first must be Round Robin.');
-        return false;
-      }
-      // 2nd stage, two stages: must be single or double elim
-      if (i === 1 && this.stages.length === 2 && !(stage.tourney_format_id === 1 || stage.tourney_format_id === 2)) {
-        alert('The last stage must be Single or Double Elimination.');
-        return false;
-      }
-      if (stage.participants_at_start < format.minimum_participants) {
-        alert(`Stage "${stage.stage_name}" requires at least ${format.minimum_participants} participants.`);
-        return false;
-      }
-      if (i !== 0) {
-        if (stage.participants_at_start > prevParticipants - 2) {
-          alert(`Stage "${stage.stage_name}" cannot have more participants at start than previous stage's end minus 2 (${prevParticipants - 2}).`);
-          return false;
-        }
-      }
-      prevParticipants = stage.participants_at_start;
-    }
-    return true;
   }
 
   loadStages() {
@@ -242,29 +178,6 @@ export class EditCompetitionComponent implements OnInit {
     };
   }
 
-  checkStageData(stage: StageDTO): boolean {
-    const tourneyFormatId = +stage.tourney_format_id;
-    const format = this.tourneyFormats.find(tf => tf.id === tourneyFormatId);
-    const participantsStartOfLastStage = this.stages.length > 0 ? this.stages[this.stages.length - 1].participants_at_start : this.form.value.max_participants;
-    if (!format) {
-      alert('Please select a valid tournament format.');
-      return false;
-    }
-    const minimumParticipants = format.minimum_participants;
-    if ((stage.participants_at_start || 0) < minimumParticipants) {
-      alert(`This format requires at least ${minimumParticipants} participants.`);
-      return false;
-    } else if (stage.participants_at_start % 2 !== 0) {
-      alert('Participants at start must be an even number.');
-      return false;
-    }
-    if (stage.participants_at_start > participantsStartOfLastStage - 2 && stage.stage_order > 1) {
-      alert('Participants at start cannot exceed participants at start of previous stage (at least 2 less).');
-      return false;
-    }
-    return true;
-  }
-
   addStageConfirmed() {
     if (!this.addStageValid()) return;
 
@@ -274,12 +187,11 @@ export class EditCompetitionComponent implements OnInit {
     this.newStage.participants_at_start = +this.newStage.participants_at_start;
     this.newStage.participants_at_end = +this.newStage.participants_at_end;
 
-    if (!this.checkStageData(this.newStage)) return;
     this.svc.addStage(this.competitionId, this.newStage).subscribe({
       next: () => {
         this.loadStagesAfterAdd();
       },
-      error: err => alert('Error adding stage: ' + (err.error || err.message))
+      error: err => alert('Error adding stage: ' + (err.error?.error || err.error || err.message))
     });
   }
 
@@ -297,7 +209,6 @@ export class EditCompetitionComponent implements OnInit {
     this.editStageData.participants_at_start = +this.editStageData.participants_at_start;
     this.editStageData.participants_at_end = +this.editStageData.participants_at_end;
 
-    if (!this.checkStageData(this.editStageData)) return;
     const stageIndex = this.stages.findIndex(s => s.stage_id === this.editStageData!.stage_id);
 
     this.svc.updateStage(this.competitionId, this.editStageData.stage_id!, this.editStageData).subscribe({
@@ -311,7 +222,7 @@ export class EditCompetitionComponent implements OnInit {
               this.editStageDialogOpen = false;
             },
             error: err => {
-              alert('Error updating previous stage: ' + (err.error || err.message));
+              alert('Error updating previous stage: ' + (err.error?.error || err.error || err.message));
               this.loadStages();
               this.editStageDialogOpen = false;
             }
@@ -321,7 +232,7 @@ export class EditCompetitionComponent implements OnInit {
           this.editStageDialogOpen = false;
         }
       },
-      error: err => alert('Error editing stage: ' + (err.error || err.message))
+      error: err => alert('Error editing stage: ' + (err.error?.error || err.error || err.message))
     });
   }
 

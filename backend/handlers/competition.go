@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Drodrl/competition-engine/models"
@@ -24,7 +23,7 @@ func SetDB(database *sql.DB) {
 func CreateDraftCompetition(w http.ResponseWriter, r *http.Request) {
 	var competition models.Competition
 	if err := json.NewDecoder(r.Body).Decode(&competition); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		sendJSONError(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	now := time.Now()
@@ -36,40 +35,37 @@ func CreateDraftCompetition(w http.ResponseWriter, r *http.Request) {
         RETURNING competition_id
     `, competition.CompetitionName, competition.SportID, competition.StartDate, competition.EndDate, competition.OrganizerID, now, competition.MaxParticipants, competition.FlagTeams).Scan(&competitionID)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(map[string]int{"competition_id": competitionID}); err != nil {
-		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
 	}
 }
 
-// DELETE /api/competitions/{id}
+// DELETE /api/competitions/{competitionId}
 func DeleteCompetition(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 {
-		http.Error(w, "Competition ID required", http.StatusBadRequest)
-		return
-	}
-	id, err := strconv.Atoi(parts[3])
+	vars := mux.Vars(r)
+	idStr := vars["competitionId"]
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid competition ID", http.StatusBadRequest)
+		sendJSONError(w, "Invalid competition ID", http.StatusBadRequest)
 		return
 	}
 	_, err = db.Exec(`DELETE FROM competitions WHERE competition_id = $1`, id)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	_, err = db.Exec(`DELETE FROM competition_stages WHERE competition_id = $1`, id)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	_, err = db.Exec(`DELETE FROM competition_participants WHERE competition_id = $1`, id)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -77,23 +73,20 @@ func DeleteCompetition(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/competitions/organizer/{organizerId}
 func GetCompetitionsByOrganizer(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 5 {
-		http.Error(w, "Organizer ID required", http.StatusBadRequest)
-		return
-	}
-	organizerID, err := strconv.Atoi(parts[4])
+	vars := mux.Vars(r)
+	organizerIDStr := vars["organizerId"]
+	organizerID, err := strconv.Atoi(organizerIDStr)
 	if err != nil {
-		http.Error(w, "Invalid organizer ID", http.StatusBadRequest)
+		sendJSONError(w, "Invalid organizer ID", http.StatusBadRequest)
 		return
 	}
 	rows, err := db.Query(`
-		SELECT competition_id, competition_name, sport_id, start_date, end_date, max_participants, organizer_id, status, date_created, date_updated, flag_teams
-		FROM competitions WHERE organizer_id = $1
-		ORDER BY date_created DESC
-	`, organizerID)
+        SELECT competition_id, competition_name, sport_id, start_date, end_date, max_participants, organizer_id, status, date_created, date_updated, flag_teams
+        FROM competitions WHERE organizer_id = $1
+        ORDER BY date_created DESC
+    `, organizerID)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -102,27 +95,24 @@ func GetCompetitionsByOrganizer(w http.ResponseWriter, r *http.Request) {
 		var c models.Competition
 		err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams)
 		if err != nil {
-			http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+			sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		competitions = append(competitions, c)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(competitions); err != nil {
-		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
 	}
 }
 
-// GET /api/competitions/{id}
+// GET /api/competitions/{competitionId}
 func GetCompetitionByID(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 {
-		http.Error(w, "Competition ID required", http.StatusBadRequest)
-		return
-	}
-	id, err := strconv.Atoi(parts[3])
+	vars := mux.Vars(r)
+	idStr := vars["competitionId"]
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid competition ID", http.StatusBadRequest)
+		sendJSONError(w, "Invalid competition ID", http.StatusBadRequest)
 		return
 	}
 	var c models.Competition
@@ -133,7 +123,7 @@ func GetCompetitionByID(w http.ResponseWriter, r *http.Request) {
         WHERE c.competition_id = $1
     `, id).Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams, &c.SportName)
 	if err != nil {
-		http.Error(w, "Competition not found", http.StatusNotFound)
+		sendJSONError(w, "Competition not found", http.StatusNotFound)
 		return
 	}
 
@@ -179,16 +169,13 @@ func GetCompetitionByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-// PUT /api/competitions/{id}
+// PUT /api/competitions/{competitionId}
 func UpdateCompetition(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 {
-		http.Error(w, "Competition ID required", http.StatusBadRequest)
-		return
-	}
-	id, err := strconv.Atoi(parts[3])
+	vars := mux.Vars(r)
+	idStr := vars["competitionId"]
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid competition ID", http.StatusBadRequest)
+		sendJSONError(w, "Invalid competition ID", http.StatusBadRequest)
 		return
 	}
 	var req struct {
@@ -199,7 +186,7 @@ func UpdateCompetition(w http.ResponseWriter, r *http.Request) {
 		FlagTeams       bool    `json:"flag_teams"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		sendJSONError(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	_, err = db.Exec(`
@@ -208,52 +195,49 @@ func UpdateCompetition(w http.ResponseWriter, r *http.Request) {
         WHERE competition_id = $7
     `, req.CompetitionName, req.StartDate, req.EndDate, req.MaxParticipants, req.FlagTeams, time.Now(), id)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
 
-// PATCH /api/competitions/{id}/status
+// PATCH /api/competitions/{competitionId}/status
 func ChangeCompetitionStatus(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 5 {
-		http.Error(w, "Competition ID required", http.StatusBadRequest)
-		return
-	}
-	id, err := strconv.Atoi(parts[3])
+	vars := mux.Vars(r)
+	idStr := vars["competitionId"]
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid competition ID", http.StatusBadRequest)
+		sendJSONError(w, "Invalid competition ID", http.StatusBadRequest)
 		return
 	}
 	var req struct {
 		Status int `json:"status"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		sendJSONError(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	var currentStatus, maxParticipants, sportID int
 	err = db.QueryRow(`SELECT status, max_participants, sport_id FROM competitions WHERE competition_id = $1`, id).Scan(&currentStatus, &maxParticipants, &sportID)
 	if err != nil {
-		http.Error(w, "Competition not found", http.StatusNotFound)
+		sendJSONError(w, "Competition not found", http.StatusNotFound)
 		return
 	}
 	if currentStatus == req.Status {
-		http.Error(w, "Competition already in this status", http.StatusBadRequest)
+		sendJSONError(w, "Competition already in this status", http.StatusBadRequest)
 		return
 	}
 
 	// Check requirements for opening or closing
 	if req.Status == 1 {
 		if err := canOpenCompetition(id, maxParticipants); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			sendJSONError(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 	}
 	if req.Status == 2 {
 		if err := canCloseSignup(id); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			sendJSONError(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		// Insert all participants into the first stage
@@ -262,19 +246,19 @@ func ChangeCompetitionStatus(w http.ResponseWriter, r *http.Request) {
             SELECT stage_id FROM competition_stages WHERE competition_id = $1 ORDER BY stage_order ASC LIMIT 1
         `, id).Scan(&firstStageID)
 		if err != nil {
-			http.Error(w, "No stages found for competition", http.StatusBadRequest)
+			sendJSONError(w, "No stages found for competition", http.StatusBadRequest)
 			return
 		}
 		// Insert users
 		res, err := db.Exec(`
-			INSERT INTO stage_participants (stage_id, user_id)
-			SELECT $1, user_id FROM competition_participants WHERE competition_id = $2 AND user_id IS NOT NULL
-			ON CONFLICT DO NOTHING
-		`, firstStageID, id)
+            INSERT INTO stage_participants (stage_id, user_id)
+            SELECT $1, user_id FROM competition_participants WHERE competition_id = $2 AND user_id IS NOT NULL
+            ON CONFLICT DO NOTHING
+        `, firstStageID, id)
 		count, _ := res.RowsAffected()
 		log.Printf("Inserted %d user participants into stage_participants", count)
 		if err != nil {
-			http.Error(w, "Failed to insert users into stage_participants: "+err.Error(), http.StatusInternalServerError)
+			sendJSONError(w, "Failed to insert users into stage_participants: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		// Insert teams
@@ -284,14 +268,14 @@ func ChangeCompetitionStatus(w http.ResponseWriter, r *http.Request) {
             ON CONFLICT DO NOTHING
         `, firstStageID, id)
 		if err != nil {
-			http.Error(w, "Failed to insert teams into stage_participants: "+err.Error(), http.StatusInternalServerError)
+			sendJSONError(w, "Failed to insert teams into stage_participants: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
 
 	_, err = db.Exec(`UPDATE competitions SET status = $1, date_updated = $2 WHERE competition_id = $3`, req.Status, time.Now(), id)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -392,29 +376,30 @@ func canCloseSignup(competitionID int) error {
 	return nil
 }
 
-// Multiplexer for /api/competitions/{id} and /api/competitions/{id}/status
+// Multiplexer for /api/competitions/{competitionId} and /api/competitions/{competitionId}/status
 func CompetitionByIDHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		if strings.HasSuffix(path, "/status") && r.Method == http.MethodPatch {
+		if r.Method == http.MethodPatch {
 			ChangeCompetitionStatus(w, r)
 		} else if r.Method == http.MethodGet {
 			GetCompetitionByID(w, r)
 		} else if r.Method == http.MethodPut {
 			UpdateCompetition(w, r)
+		} else if r.Method == http.MethodDelete {
+			DeleteCompetition(w, r)
 		} else {
-			http.Error(w, "Not found", http.StatusNotFound)
+			sendJSONError(w, "Not found", http.StatusNotFound)
 		}
 	})
 }
 
-// GET /api/competitions/{id}/stages
+// GET /api/competitions/{competitionId}/stages
 func GetStagesByCompetitionID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	competitionIDStr := vars["competitionId"]
 	competitionID, err := strconv.Atoi(competitionIDStr)
 	if err != nil {
-		http.Error(w, "Invalid competition ID", http.StatusBadRequest)
+		sendJSONError(w, "Invalid competition ID", http.StatusBadRequest)
 		return
 	}
 	rows, err := db.Query(`
@@ -422,7 +407,7 @@ func GetStagesByCompetitionID(w http.ResponseWriter, r *http.Request) {
         FROM competition_stages WHERE competition_id = $1 ORDER BY stage_order ASC
     `, competitionID)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -430,29 +415,40 @@ func GetStagesByCompetitionID(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var s models.StageDTO
 		if err := rows.Scan(&s.StageID, &s.StageName, &s.StageOrder, &s.TourneyFormatID, &s.ParticipantsAtStart, &s.ParticipantsAtEnd); err != nil {
-			http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+			sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		stages = append(stages, s)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(stages); err != nil {
-		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
 	}
 }
 
-// POST /api/competitions/{id}/stages
+// POST /api/competitions/{competitionId}/stages
 func AddStageToCompetition(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	competitionIDStr := vars["competitionId"]
 	competitionID, err := strconv.Atoi(competitionIDStr)
 	if err != nil {
-		http.Error(w, "Invalid competition ID", http.StatusBadRequest)
+		sendJSONError(w, "Invalid competition ID", http.StatusBadRequest)
 		return
 	}
 	var stage models.StageDTO
 	if err := json.NewDecoder(r.Body).Decode(&stage); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		sendJSONError(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+	stages, err := getCompetitionStages(competitionID)
+	if err != nil {
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	stages = append(stages, stage)
+	maxParticipants, _ := getCompetitionMaxParticipants(competitionID)
+	if err := validateStagesBusinessRules(competitionID, stages, maxParticipants); err != nil {
+		sendJSONError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	_, err = db.Exec(`
@@ -460,69 +456,94 @@ func AddStageToCompetition(w http.ResponseWriter, r *http.Request) {
         VALUES ($1, $2, $3, $4, $5, $6)
     `, competitionID, stage.StageOrder, stage.StageName, stage.TourneyFormatID, stage.ParticipantsAtStart, stage.ParticipantsAtEnd)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
 }
 
-// PUT /api/competitions/{id}/stages/{stageId}
+// PUT /api/competitions/{competitionId}/stages/{stageId}
 func UpdateStage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	competitionIDStr := vars["competitionId"]
 	stageIDStr := vars["stageId"]
+
+	competitionID, err := strconv.Atoi(competitionIDStr)
+	if err != nil {
+		sendJSONError(w, "Invalid competition ID", http.StatusBadRequest)
+		return
+	}
 	stageID, err := strconv.Atoi(stageIDStr)
 	if err != nil {
-		http.Error(w, "Invalid stage ID", http.StatusBadRequest)
+		sendJSONError(w, "Invalid stage ID", http.StatusBadRequest)
 		return
 	}
+
 	var stage models.StageDTO
 	if err := json.NewDecoder(r.Body).Decode(&stage); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		sendJSONError(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
+
+	stages, err := getCompetitionStages(competitionID)
+	if err != nil {
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	for i := range stages {
+		if stages[i].StageID == stageID {
+			stage.StageID = stageID
+			stages[i] = stage
+			break
+		}
+	}
+
+	maxParticipants, _ := getCompetitionMaxParticipants(competitionID)
+	if err := validateStagesBusinessRules(competitionID, stages, maxParticipants); err != nil {
+		sendJSONError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	_, err = db.Exec(`
         UPDATE competition_stages
         SET stage_name = $1, stage_order = $2, tourney_format_id = $3, participants_at_start = $4, participants_at_end = $5
         WHERE stage_id = $6
     `, stage.StageName, stage.StageOrder, stage.TourneyFormatID, stage.ParticipantsAtStart, stage.ParticipantsAtEnd, stageID)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
 
-// DELETE /api/competitions/{id}/stages/{stageId}
+// DELETE /api/competitions/{competitionId}/stages/{stageId}
 func DeleteStage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	stageIDStr := vars["stageId"]
 	stageID, err := strconv.Atoi(stageIDStr)
 	if err != nil {
-		http.Error(w, "Invalid stage ID", http.StatusBadRequest)
+		sendJSONError(w, "Invalid stage ID", http.StatusBadRequest)
 		return
 	}
 	_, err = db.Exec(`DELETE FROM competition_stages WHERE stage_id = $1`, stageID)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
 
-// GET /api/competitions/{id}/pàrticipants
+// GET /api/competitions/{competitionId}/participants
 func GetParticipantsByCompetitionID(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 5 {
-		http.Error(w, "Competition ID required", http.StatusBadRequest)
-		return
-	}
-	competitionID, err := strconv.Atoi(parts[3])
+	vars := mux.Vars(r)
+	competitionIDStr := vars["competitionId"]
+	competitionID, err := strconv.Atoi(competitionIDStr)
 	if err != nil {
-		http.Error(w, "Invalid competition ID", http.StatusBadRequest)
+		sendJSONError(w, "Invalid competition ID", http.StatusBadRequest)
 		return
 	}
 
-	// Adjust query depending on individual/team competition
 	rows, err := db.Query(`
         SELECT u.id_user, u.name_user, u.lname1_user
         FROM competition_participants cp
@@ -535,7 +556,7 @@ func GetParticipantsByCompetitionID(w http.ResponseWriter, r *http.Request) {
         WHERE cp.competition_id = $1
     `, competitionID)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -549,27 +570,24 @@ func GetParticipantsByCompetitionID(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var p Participant
 		if err := rows.Scan(&p.ID, &p.Name, &p.LastName); err != nil {
-			http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+			sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		participants = append(participants, p)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(participants); err != nil {
-		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
 	}
 }
 
-// POST /api/competitions/{id}/finish
+// POST /api/competitions/{competitionId}/finish
 func FinishCompetition(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 {
-		http.Error(w, "Competition ID required", http.StatusBadRequest)
-		return
-	}
-	competitionID, err := strconv.Atoi(parts[3])
+	vars := mux.Vars(r)
+	competitionIDStr := vars["competitionId"]
+	competitionID, err := strconv.Atoi(competitionIDStr)
 	if err != nil {
-		http.Error(w, "Invalid competition ID", http.StatusBadRequest)
+		sendJSONError(w, "Invalid competition ID", http.StatusBadRequest)
 		return
 	}
 
@@ -581,7 +599,7 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
         ORDER BY stage_order DESC LIMIT 1
     `, competitionID).Scan(&lastStageID)
 	if err != nil {
-		http.Error(w, "No stages found for competition", http.StatusBadRequest)
+		sendJSONError(w, "No stages found for competition", http.StatusBadRequest)
 		return
 	}
 
@@ -593,11 +611,11 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
         WHERE r.stage_id = $1 AND m.completed_at IS NULL
     `, lastStageID).Scan(&unfinished)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if unfinished > 0 {
-		http.Error(w, "Not all matches are completed", http.StatusBadRequest)
+		sendJSONError(w, "Not all matches are completed", http.StatusBadRequest)
 		return
 	}
 
@@ -609,7 +627,7 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
         ORDER BY round_number DESC LIMIT 1
     `, lastStageID).Scan(&lastRoundID)
 	if err != nil {
-		http.Error(w, "No rounds found in last stage", http.StatusBadRequest)
+		sendJSONError(w, "No rounds found in last stage", http.StatusBadRequest)
 		return
 	}
 
@@ -623,7 +641,7 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
         LIMIT 1
     `, lastRoundID).Scan(&winnerUserID, &winnerTeamID)
 	if err != nil {
-		http.Error(w, "No winner found in last round", http.StatusBadRequest)
+		sendJSONError(w, "No winner found in last round", http.StatusBadRequest)
 		return
 	}
 
@@ -638,7 +656,7 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
 	// 5. Update competition status
 	_, err = db.Exec(`UPDATE competitions SET status = 3 WHERE competition_id = $1`, competitionID)
 	if err != nil {
-		http.Error(w, "Failed to update competition status: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "Failed to update competition status: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -662,7 +680,7 @@ func GetAllCompetitions(w http.ResponseWriter, r *http.Request) {
         ORDER BY date_created DESC
     `)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -671,29 +689,24 @@ func GetAllCompetitions(w http.ResponseWriter, r *http.Request) {
 		var c models.Competition
 		err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams)
 		if err != nil {
-			http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+			sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		competitions = append(competitions, c)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(competitions); err != nil {
-		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
 	}
 }
 
 // GET /api/competitions/flag_teams/{flagTeams}
 func GetCompetitionsByFlagTeams(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 5 {
-		http.Error(w, "Flag teams value required", http.StatusBadRequest)
-		return
-	}
-
-	flagTeams := parts[4]
+	vars := mux.Vars(r)
+	flagTeams := vars["flagTeams"]
 	isTeamCompetition, err := strconv.ParseBool(flagTeams)
 	if err != nil {
-		http.Error(w, "Invalid flag teams value", http.StatusBadRequest)
+		sendJSONError(w, "Invalid flag teams value", http.StatusBadRequest)
 		return
 	}
 
@@ -704,7 +717,7 @@ func GetCompetitionsByFlagTeams(w http.ResponseWriter, r *http.Request) {
         ORDER BY date_created DESC
     `, isTeamCompetition)
 	if err != nil {
-		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -714,7 +727,7 @@ func GetCompetitionsByFlagTeams(w http.ResponseWriter, r *http.Request) {
 		var c models.Competition
 		err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams)
 		if err != nil {
-			http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
+			sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		competitions = append(competitions, c)
@@ -722,6 +735,53 @@ func GetCompetitionsByFlagTeams(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(competitions); err != nil {
-		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+		sendJSONError(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// Helper: Validate stage business rules
+func validateStagesBusinessRules(competitionID int, stages []models.StageDTO, maxParticipants int) error {
+	if len(stages) == 0 {
+		return errors.New("please add at least one stage before saving")
+	}
+	for i, stage := range stages {
+		// 1st stage, only one stage: must be single or double elim
+		if i == 0 && len(stages) == 1 && !(stage.TourneyFormatID == 1 || stage.TourneyFormatID == 2) {
+			return errors.New("if there is only one stage, it must be Single or Double Elimination")
+		}
+		// 1st stage, two stages: must be RR
+		if i == 0 && len(stages) == 2 && stage.TourneyFormatID != 3 {
+			return errors.New("if there are two stages, the first must be Round Robin")
+		}
+		// 2nd stage, two stages: must be single or double elim
+		if i == 1 && len(stages) == 2 && !(stage.TourneyFormatID == 1 || stage.TourneyFormatID == 2) {
+			return errors.New("the last stage must be Single or Double Elimination")
+		}
+		// Minimum participants
+		minParticipants, err := getFormatMinParticipants(stage.TourneyFormatID)
+		if err != nil {
+			return err
+		}
+		if stage.ParticipantsAtStart < minParticipants {
+			return errors.New("stage requires at least the minimum number of participants")
+		}
+		// Even number check
+		if stage.ParticipantsAtStart%2 != 0 {
+			return errors.New("participants at start must be an even number")
+		}
+		// Participants at start for subsequent stages
+		if i > 0 {
+			prev := stages[i-1]
+			if stage.ParticipantsAtStart > prev.ParticipantsAtStart-2 {
+				return errors.New("participants at start cannot exceed participants at start of previous stage (at least 2 less)")
+			}
+		}
+	}
+	return nil
+}
+
+func getFormatMinParticipants(formatID int) (int, error) {
+	var min int
+	err := db.QueryRow(`SELECT minimum_participants FROM tournament_formats WHERE tourney_format_id = $1`, formatID).Scan(&min)
+	return min, err
 }
