@@ -8,6 +8,8 @@ interface Competition {
   competition_name: string;
   sport_id: number;
   start_date: Date;
+  end_date?: Date; 
+  status?: number;
 }
 
 interface Team {
@@ -29,6 +31,7 @@ export class TeamSignupComponent implements OnInit {
   selectedCompetitionId: number | null = null;
   userId: number | null = null;
   showModal: boolean = false;
+  sports: { id: number; name: string }[] = [];
 
   constructor(private http: HttpClient) {}
 
@@ -36,6 +39,9 @@ export class TeamSignupComponent implements OnInit {
     this.userId = Number(sessionStorage.getItem('userId'));
     this.http.get<Competition[]>('/api/handlers/competitions').subscribe((data: any) => {
       this.competitions = data;
+    });
+    this.http.get<{ id: number; name: string }[]>('/api/sports').subscribe((data: any) => {
+      this.sports = data;
     });
   }
 
@@ -64,5 +70,17 @@ export class TeamSignupComponent implements OnInit {
         alert(errorMessage);
       },
     });
+  }
+
+  getSportName(sportId: number): string {
+    const sport = this.sports.find(s => s.id === sportId);
+    return sport ? sport.name : sportId.toString();
+  }
+
+  getCompStatus(competition: Competition): string {
+    const status = this.competitions.find(c => c.competition_id === competition.competition_id)?.status;
+    if (status === 1) return "Open";
+    if (status === 0) return "Closed";
+    return "Unknown";
   }
 }

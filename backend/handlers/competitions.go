@@ -11,7 +11,7 @@ import (
 func NewCompetitionListHandler(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(`
-            SELECT c.competition_id, c.competition_name, s.sport_name, c.start_date
+            SELECT c.competition_id, c.competition_name, s.sport_id, c.start_date
             FROM competitions c
             JOIN sports s ON c.sport_id = s.sport_id
         `)

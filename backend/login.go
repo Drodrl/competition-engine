@@ -7,6 +7,16 @@ import (
 	"net/http"
 )
 
+type Credentials struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	Message string `json:"message"`
+	Token   string `json:"token,omitempty"`
+}
+
 func NewLoginHandler(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

@@ -63,9 +63,9 @@ export class CompetitionCreateComponent implements OnInit {
     const payload = {
       competition_name: formValue.competition_name,
       sport_id: +formValue.sport_id,
-      start_date: formValue.start_date,
-      end_date: formValue.end_date,
-      organizer_id: this.organizerId,
+      start_date: formValue.start_date || null,
+      end_date: formValue.end_date || null,
+      organizer_id: Number(this.organizerId),
       max_participants: +formValue.max_participants,
       flag_teams: !!formValue.flag_teams
     };

@@ -42,7 +42,7 @@ export class MyCompetitionsComponent implements OnInit {
       this.router.navigate(['/edit-competition', id]);
     }
     else{
-      //this.router.navigate(['/manage-competition', id]);
+      this.router.navigate(['/manage-competition', id]);
     }
   }
 

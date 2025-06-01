@@ -84,4 +84,44 @@ export class CompetitionService {
   changeCompetitionStatus(id: number, status: number): Observable<any> {
     return this.http.patch(`/api/competitions/${id}/status`, { status });
   }
+
+  getParticipantsByCompetitionId(id: number): Observable<any[]> {
+    return this.http.get<any[]>(`/api/competitions/${id}/participants`);
+  }
+
+  getRoundsByStageId(stageId: number): Observable<any[]> {
+    return this.http.get<any[]>(`/api/stages/${stageId}/rounds`);
+  }
+
+  getMatchesByRoundId(roundId: number): Observable<any[]> {
+    return this.http.get<any[]>(`/api/rounds/${roundId}/matches`);
+  }
+
+  getMatchParticipants(matchId: number): Observable<any[]> {
+    return this.http.get<any[]>(`/api/matches/${matchId}/participants`);
+  }
+
+  updateMatchParticipant(matchId: number, participantId: number, data: any): Observable<any> {
+    return this.http.put(`/api/matches/${matchId}/participants/${participantId}`, data);
+  }
+
+  updateMatchResults(matchId: number, results: any[]) {
+    return this.http.put(`/api/matches/${matchId}/results`, results);
+  }
+
+  generateNextRound(stageId: number) {
+    return this.http.post(`/api/stages/${stageId}/generate-next-round`, {});
+  }
+
+  getCanGenerateNextRound(stageId: number) {
+    return this.http.get<{ canGenerate: boolean, reason?: string }>(`/api/stages/${stageId}/can-generate-next-round`);
+  }
+
+  advanceAfterRoundRobin(stageId: number) {
+    return this.http.post<{advanced?: boolean, finished?: boolean}>(`/api/stages/${stageId}/advance`, {});
+  }
+
+  finishCompetition(competitionId: number) {
+    return this.http.post<{finished: boolean}>(`/api/competitions/${competitionId}/finish`, {});
+  }
 }

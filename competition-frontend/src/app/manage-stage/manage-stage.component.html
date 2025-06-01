@@ -1,0 +1,52 @@
+<h2>Manage Stage</h2>
+
+<div class="rounds-panel">
+  <h3>Rounds</h3>
+  <ul>
+    <li *ngFor="let round of rounds" [class.selected]="round === selectedRound">
+      <button (click)="selectRound(round)">
+        Round {{ round.round_number }}
+      </button>
+    </li>
+  </ul>
+  <button 
+    (click)="generateRound()" 
+    [disabled]="!canGenerateNextRound"
+    [title]="!canGenerateNextRound ? cannotGenerateReason : ''">
+    Generate Next Round
+  </button>
+</div>
+
+<div *ngIf="selectedRound" class="matches-panel">
+  <h3>Matches for Round {{ selectedRound.round_number }}</h3>
+  <div *ngFor="let match of matches" class="match-card">
+    <h4>Match {{ match.match_id }}</h4>
+    <small>Scheduled: {{ match.scheduled_at | date:'short' }}</small>
+    <table>
+      <thead>
+        <tr>
+          <th>Participant</th>
+          <th>Score</th>
+          <th>Winner?</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of matchParticipants[match.match_id]">
+          <td>
+            {{ p.user_id || ('Team ' + p.team_id) }}
+          </td>
+          <td>
+            <input type="number" [(ngModel)]="p.score" />
+          </td>
+          <td>
+            <input type="checkbox" [(ngModel)]="p.is_winner" />
+          </td>
+          <td>
+            <button (click)="saveParticipantResult(match.match_id)">Save All</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

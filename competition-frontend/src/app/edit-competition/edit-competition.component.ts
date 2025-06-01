@@ -190,20 +190,19 @@ export class EditCompetitionComponent implements OnInit {
   }
 
   openCompetition() {
-    this.save();
-
+    this.save(); // Save any changes first (if needed)
     this.svc.changeCompetitionStatus(this.competitionId, 1).subscribe({
       next: () => {
         alert('Competition opened successfully!');
         this.status = 1;
         this.router.navigate(['/my-competitions']);
       },
-      error: err => alert('Error opening competition: ' + (err.error || err.message))
+      error: err => alert('Error opening competition: ' + (err.error?.error || err.error || err.message))
     });
   }
 
   addStageValid(): boolean {
-    if (!Array.isArray(this.stages) || this.stages.length >= 3) {
+    if (!Array.isArray(this.stages) || this.stages.length >= 2) {
       return false;
     }
     return true;
@@ -263,24 +262,7 @@ export class EditCompetitionComponent implements OnInit {
     if (!this.checkStageData(this.newStage)) return;
     this.svc.addStage(this.competitionId, this.newStage).subscribe({
       next: () => {
-        if (this.stages.length > 0) {
-          const prevStage = this.stages[this.stages.length - 1];
-          const updatedPrevStage = { ...prevStage, participants_at_end: this.newStage.participants_at_start };
-          this.svc.updateStage(this.competitionId, prevStage.stage_id!, updatedPrevStage).subscribe({
-            next: () => {
-              this.loadStages();
-              this.addStageDialogOpen = false;
-            },
-            error: err => {
-              alert('Error updating previous stage: ' + (err.error || err.message));
-              this.loadStages();
-              this.addStageDialogOpen = false;
-            }
-          });
-        } else {
-          this.loadStages();
-          this.addStageDialogOpen = false;
-        }
+        this.loadStagesAfterAdd();
       },
       error: err => alert('Error adding stage: ' + (err.error || err.message))
     });
@@ -333,22 +315,7 @@ export class EditCompetitionComponent implements OnInit {
     const stageIndex = this.stages.findIndex(s => s.stage_id === stage.stage_id);
     this.svc.deleteStage(this.competitionId, stage.stage_id!).subscribe({
       next: () => {
-        // If there is a previous and next stage, update previous stage's participants_at_end
-        if (stageIndex > 0 && stageIndex < this.stages.length - 1) {
-          const prevStage = this.stages[stageIndex - 1];
-          const nextStage = this.stages[stageIndex + 1];
-          const updatedPrevStage = { ...prevStage, participants_at_end: nextStage.participants_at_start };
-          this.svc.updateStage(this.competitionId, prevStage.stage_id!, updatedPrevStage).subscribe({
-            next: () => this.loadStages(),
-            error: err => alert('Error updating previous stage: ' + (err.error || err.message))
-          });
-          const updatedNextStage = { ...nextStage, stage_order: prevStage.stage_order + 1 };
-          this.svc.updateStage(this.competitionId, nextStage.stage_id!, updatedNextStage).subscribe({
-            next: () => this.loadStages(),
-            error: err => alert('Error updating next stage: ' + (err.error || err.message))
-          });
-        }
-        else if (stageIndex > 0 && stageIndex === this.stages.length) {
+        if (stageIndex > 0 && stageIndex === this.stages.length) {
           const prevStage = this.stages[stageIndex - 1];
           const updatedPrevStage = { ...prevStage, participants_at_end: 1 };
           this.svc.updateStage(this.competitionId, prevStage.stage_id!, updatedPrevStage).subscribe({
@@ -390,6 +357,38 @@ export class EditCompetitionComponent implements OnInit {
 
   isFirstStage(): boolean {
     return this.stages.length === 0;
+  }
+
+  private loadStagesAfterAdd() {
+    this.svc.getStagesByCompetitionId(this.competitionId).subscribe({
+      next: data => {
+        this.stages = Array.isArray(data) ? data : [];
+        // Now update the previous stage if needed
+        if (this.stages.length > 1) {
+          const prevStage = this.stages[this.stages.length - 2];
+          const newStage = this.stages[this.stages.length - 1];
+          const updatedPrevStage = { ...prevStage, participants_at_end: newStage.participants_at_start };
+          this.svc.updateStage(this.competitionId, prevStage.stage_id!, updatedPrevStage).subscribe({
+            next: () => {
+              this.loadStages();
+              this.addStageDialogOpen = false;
+            },
+            error: err => {
+              alert('Error updating previous stage: ' + (err.error || err.message));
+              this.loadStages();
+              this.addStageDialogOpen = false;
+            }
+          });
+        } else {
+          this.loadStages();
+          this.addStageDialogOpen = false;
+        }
+      },
+      error: err => {
+        alert('Error loading stages after add: ' + (err.error || err.message));
+        this.addStageDialogOpen = false;
+      }
+    });
   }
 
 }

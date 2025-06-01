@@ -1,120 +1,38 @@
-<div class="top-right-buttons">
-  <button (click)="deleteCompetition()">Delete</button>
-  <button (click)="goBack()">Back</button>
-</div>
-
-<h2>Edit Competition</h2>
-<div *ngIf="loading">Loading...</div>
-<div *ngIf="error">{{ error }}</div>
-
 <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()">
-  <label>Competition Name:</label>
-  <input formControlName="competition_name" /><br/>
+  <label>
+    Competition Name:
+    <input formControlName="competition_name" />
+  </label>
 
-  <label>Sport:</label>
-  <select formControlName="sport_id" [disabled]="true">
-    <option [value]="null">-- Select Sport --</option>
-    <option *ngFor="let s of sports" [value]="s.id">{{ s.name }}</option>
-  </select><br/>
+  <label>
+    Sport:
+    <select formControlName="sport_id" [disabled]="true">
+      <option [value]="null">-- Select Sport --</option>
+      <option *ngFor="let s of sports" [value]="s.id">{{ s.name }}</option>
+    </select>
+  </label>
   
-  <label>Start Date:</label>
-  <input type="date" formControlName="start_date" /><br/>
+  <label>
+    Start Date:
+    <input type="date" formControlName="start_date" />
+  </label>
 
-  <label>End Date:</label>
-  <input type="date" formControlName="end_date" /><br/>
+  <label>
+    End Date:
+    <input type="date" formControlName="end_date" />
+  </label>
 
-  <label>Max Participants:</label>
-  <input type="number" formControlName="max_participants" /><br/>
+  <label>
+    Max Participants:
+    <input type="number" formControlName="max_participants" />
+  </label>
 
   <label>
     <input type="checkbox" formControlName="flag_teams" />
     Competition is for teams (uncheck for individual athletes)
-  </label><br/>
+  </label>
 
   <div>Status: <b>{{ statusLabel }}</b></div>
   <button type="submit" [disabled]="form.invalid">Save</button>
   <button type="button" (click)="openCompetition()">Open Competition</button>
 </form>
-
-<h3>Stages</h3>
-<ul>
-  <li *ngFor="let stage of stages">
-    {{stage.stage_order}}. {{stage.stage_name}} ({{tourneyLabel(stage.tourney_format_id)}})
-    <button (click)="openEditStageDialog(stage)" [disabled]="status !== 0">Edit</button>
-    <button (click)="deleteStage(stage)" [disabled]="status !== 0">Delete</button>
-  </li>
-</ul>
-<div *ngIf="!loading && stages && stages.length === 0">This competition has no stages.</div>
-<div>
-  <button (click)="openAddStageDialog()" [disabled]="!addStageValid() || status !== 0">Add Stage</button>
-</div>
-
-<!-- Add Stage Dialog -->
-<div *ngIf="addStageDialogOpen" class="dialog-backdrop">
-  <div class="dialog">
-    <h4>Add Stage</h4>
-    <label>Name:</label>
-    <input [(ngModel)]="newStage.stage_name" name="newStageName" /><br/>
-
-    <label>Order:</label>
-    <input type="number" [(ngModel)]="newStage.stage_order" name="newStageOrder" [disabled]="true"/><br/>
-    
-    <label>Tourney Format:</label>
-    <select [(ngModel)]="newStage.tourney_format_id" name="newStageFormat">
-      <option [ngValue]="0">-- Select Format --</option>
-      <option *ngFor="let tf of tourneyFormats" [ngValue]="tf.id">{{ tf.name }}</option>
-    </select><br/>
-    
-    <label>Participants at start:</label>
-    <input type="number" [(ngModel)]="newStage.participants_at_start" name="newStageParticipantsStart" [disabled]="isFirstStage()"/><br/>
-    
-    <button (click)="addStageConfirmed()">Add</button>
-    <button (click)="addStageDialogOpen = false">Cancel</button>
-  </div>
-</div>
-
-<!-- Edit Stage Dialog -->
-<div *ngIf="editStageDialogOpen && editStageData" class="dialog-backdrop">
-  <div class="dialog">
-    <h4>Edit Stage</h4>
-    <label>Name:</label>
-    <input [(ngModel)]="editStageData.stage_name" name="editStageName" /><br/>
-    <label>Order:</label>
-    <input type="number" [(ngModel)]="editStageData.stage_order" name="editStageOrder" [disabled]="true"/><br/>
-    <label>Tourney Format:</label>
-    <select [(ngModel)]="editStageData.tourney_format_id" name="editStageFormat">
-      <option [value]="0">-- Select Format --</option>
-      <option *ngFor="let tf of tourneyFormats" [value]="tf.id">{{ tf.name }}</option>
-    </select><br/>
-    <label>Participants at start:</label>
-    <input type="number" [(ngModel)]="editStageData.participants_at_start" name="editStageParticipantsStart" /><br/>
-    <button (click)="saveEditStage()">Save</button>
-    <button (click)="editStageDialogOpen = false">Cancel</button>
-  </div>
-</div>
-
-<style>
-.dialog-backdrop {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.dialog {
-  background: #fff;
-  padding: 1.5em;
-  border-radius: 8px;
-  min-width: 300px;
-  box-shadow: 0 2px 8px #0003;
-}
-.top-right-buttons {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  display: flex;
-  gap: 10px;
-}
-</style>
