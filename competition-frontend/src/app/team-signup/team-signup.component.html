@@ -1,11 +1,17 @@
-<h1>Sign up your team for a competition</h1>
+<div class="header">
+  <h1>Sign up your team for a competition</h1>
+  <button (click)="goToAthleteDashboard()" class="back-button">Back</button>
+</div>
 
 <table>
-
+  <tr>
     <th>Competition Name</th>
     <th>Sport</th>
     <th>Start Date</th>
-    
+    <th>End Date</th>
+    <th>Status</th>
+    <th>Action</th>
+  </tr>
   <tr *ngFor="let comp of competitions">
     <td>{{ comp.competition_name }}</td>
     <td>{{ getSportName(comp.sport_id) }}</td>
@@ -16,10 +22,9 @@
   </tr>
 </table>
 
-<div *ngIf="showModal" class="modal">
-  <div class="modal-content">
-    <h2>Select a Team</h2>
-    <table>
+<dialog *ngIf="showModal" open>
+  <h2>Select a Team</h2>
+  <table>
       <thead>
         <tr>
           <th>Team Name</th>
@@ -32,7 +37,8 @@
           <td><button (click)="signUp(team.team_id)">Sign Up</button></td>
         </tr>
       </tbody>
-    </table>
+  </table>
+  <form method="dialog">
     <button (click)="showModal = false">Close</button>
-  </div>
-</div>
+  </form>
+</dialog>

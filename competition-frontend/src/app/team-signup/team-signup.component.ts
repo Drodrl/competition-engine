@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 
@@ -8,7 +8,7 @@ interface Competition {
   competition_name: string;
   sport_id: number;
   start_date: Date;
-  end_date?: Date;
+  end_date?: Date; 
   status?: number;
 }
 
@@ -38,11 +38,11 @@ export class TeamSignupComponent implements OnInit {
   userId: number | null = null;
   showModal: boolean = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit() {
     this.userId = Number(sessionStorage.getItem('userId'));
-    this.http.get<Competition[]>('/api/competitions').subscribe((data: any) => {
+    this.http.get<Competition[]>('/api/competitions/flag_teams/true').subscribe((data: any) => {
       this.competitions = data;
     });
     this.http.get<Sport[]>('/api/sports').subscribe((data: any) => {
@@ -87,5 +87,9 @@ export class TeamSignupComponent implements OnInit {
         alert(errorMessage);
       },
     });
+  }
+
+  goToAthleteDashboard() {
+    this.router.navigate(['/athlete-dashboard']); 
   }
 }

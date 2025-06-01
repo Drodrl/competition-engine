@@ -1,0 +1,17 @@
+node_modules
+.angular
+coverage
+dist
+.git
+.gitignore
+.vscode
+*.log
+npm-debug.log
+backend/static
+competition-frontend/dist
+competition-frontend/node_modules
+competition-frontend/.angular
+competition-frontend/coverage
+competition-frontend/.vscode
+competition-frontend/.git
+competition-frontend/npm-debug.log

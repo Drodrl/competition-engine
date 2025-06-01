@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 
@@ -21,6 +21,7 @@ interface Sport {
   selector: 'app-competition-signup',
   standalone: true,
   templateUrl: './competition-signup.component.html',
+  styleUrls: ['./competition-signup.component.scss'],
   imports: [CommonModule, RouterModule],
 })
 
@@ -29,12 +30,12 @@ export class CompetitionSignupComponent implements OnInit {
   sports: Sport[] = [];
   userId: number | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit() {
     this.userId = Number(sessionStorage.getItem('userId'));
-    this.http.get<Competition[]>('/api/competitions').subscribe((data: any) => {
-      this.competitions = data;
+    this.http.get<Competition[]>('/api/competitions/flag_teams/false').subscribe((data: any) => {
+      this.competitions = data.filter((competition: Competition) => competition.status == 1 || competition.status == 2);
     });
     this.http.get<Sport[]>('/api/sports').subscribe((data: any) => {
       this.sports = data;
@@ -53,8 +54,8 @@ export class CompetitionSignupComponent implements OnInit {
     const found = this.competitions.find(c => c.competition_id === competition.competition_id);
     const status = found?.status ?? competition.status;
     if (status === 1) return "Open";
-    if (status === 0) return "Closed";
-    return "Unknown";
+    if (status === 2) return "Closed";
+    return "Draft";
   }
 
   signUp(competitionId: number) {
@@ -71,5 +72,9 @@ export class CompetitionSignupComponent implements OnInit {
             const errorMessage = err.error?.message || 'Signup failed';
             alert(errorMessage); }
     });
+  }
+
+  goToAthleteDashboard() {
+    this.router.navigate(['/athlete-dashboard']);
   }
 }

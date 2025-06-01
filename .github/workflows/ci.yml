@@ -50,9 +50,9 @@ jobs:
       working-directory: backend
       run: go build -v ./...
       
-    #- name: Test Go
-      #working-directory: backend
-      #run: go test ./... -coverprofile coverage.out 
+    - name: Test Go
+      working-directory: backend
+      run: go test ./... #-coverprofile coverage.out 
       
 
     #- name: Test Angular

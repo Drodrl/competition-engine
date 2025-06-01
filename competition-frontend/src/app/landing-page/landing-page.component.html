@@ -1,0 +1,50 @@
+<div class="header">
+  <h1>Welcome to Competition Engine</h1>
+  <button class="login-button" (click)="goToLogin()">Login</button>
+</div>
+
+<div class="landing-container">
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <h2>Finished Competitions</h2>
+  <table *ngIf="finishedCompetitions.length > 0">
+    <thead>
+      <tr>
+        <th>Competition Name</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let comp of finishedCompetitions">
+        <td>{{ comp.competition_name }}</td>
+        <td>{{ comp.start_date | date:'yyyy-MM-dd' }}</td>
+        <td>{{ comp.end_date | date:'yyyy-MM-dd' }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="finishedCompetitions.length === 0">
+    No finished competitions.
+  </div>
+
+  <h2>Ongoing Competitions</h2>
+  <table *ngIf="ongoingCompetitions.length > 0">
+    <thead>
+      <tr>
+        <th>Competition Name</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let comp of ongoingCompetitions">
+        <td>{{ comp.competition_name }}</td>
+        <td>{{ comp.start_date | date:'yyyy-MM-dd' }}</td>
+        <td>{{ comp.end_date | date:'yyyy-MM-dd' }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="ongoingCompetitions.length === 0">
+    No ongoing competitions.
+  </div>
+</div>

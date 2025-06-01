@@ -1,1 +1,11 @@
 /* You can add global styles to this file, and also import other style files */
+@import "@picocss/pico/css/pico.min.css";
+
+form {
+  max-width: 400px;
+  margin: 2em auto;
+  padding: 2em 1.5em;
+  background: var(--pico-background, #4c4e87);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px #0001;
+}

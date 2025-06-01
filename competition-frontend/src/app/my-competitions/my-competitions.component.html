@@ -1,36 +1,36 @@
-<div class="top-right-buttons">
-  <button (click)="goBack()">Back</button>
-</div>
-
-<p>My Competitions</p>
-<div *ngIf="loading">Loading...</div>
-<div *ngIf="error">{{ error }}</div>
-<table *ngIf="!loading && competitions && competitions.length > 0" border="1" style="border-collapse: collapse; width: 100%;">
-<tr>
-    <th>Name</th>
-    <th>Status</th>
-    <th>Start</th>
-    <th>End</th>
-    <th>Actions</th>
-  </tr>
-  <tr *ngFor="let c of competitions">
-    <td>{{ c.competition_name }}</td>
-    <td>{{ statusLabel(c.status) }}</td>
-    <td>{{ c.start_date ? (c.start_date | date:'yyyy-MM-dd') : '-' }}</td>
-    <td>{{ c.end_date ? (c.end_date | date:'yyyy-MM-dd') : '-' }}</td>
-    <td>
-      <button (click)="editCompetition(c.competition_id, c.status)">Edit</button>
-    </td>
-  </tr>
-</table>
-<div *ngIf="!loading && competitions && competitions.length === 0">No competitions found.</div>
-
-<style>
-.top-right-buttons {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  display: flex;
-  gap: 10px;
-}
-</style>
+<main>
+  <nav class="top-right-buttons">
+    <button (click)="goBack()">Back</button>
+  </nav>
+  <section>
+    <header>
+      <h2>My Competitions</h2>
+    </header>
+    <table *ngIf="!loading && competitions && competitions.length > 0">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Sport</th>
+          <th>Status</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of competitions" [ngClass]="{'finished-competition': c.status === 3}">
+          <td>{{ c.competition_name }}</td>
+          <td>{{ c.sport_name }}</td>
+          <td>{{ statusLabel(c.status) }}</td>
+          <td>{{ c.start_date ? (c.start_date | date:'yyyy-MM-dd') : '-' }}</td>
+          <td>{{ c.end_date ? (c.end_date | date:'yyyy-MM-dd') : '-' }}</td>
+          <td>
+            <button (click)="editCompetition(c.competition_id, c.status)">
+              {{ getActionLabel(c.status) }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>

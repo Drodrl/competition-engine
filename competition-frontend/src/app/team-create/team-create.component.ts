@@ -2,19 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 
 interface User {
-  id: number;
-  first_name: string;
-  last_name: string;
+  id_user: number;
+  name_user: string;
+  lname1_user: string;
 }
 
 @Component({
   selector: 'app-team-create',
   standalone: true,
   templateUrl: './team-create.component.html',
-//   styleUrls: ['./team-create.component.scss']
+  styleUrls: ['./team-create.component.scss'],
   imports: [CommonModule, RouterModule, ReactiveFormsModule],
 })
 
@@ -23,7 +23,7 @@ export class TeamCreateComponent implements OnInit {
   users: User[] = [];
   selectedUserIds: number[] = [];
 
-  constructor(private fb: FormBuilder, private http: HttpClient) {
+  constructor(private fb: FormBuilder, private http: HttpClient, private router: Router) {
     this.teamForm = this.fb.group({
       teamName: ['']
     });
@@ -53,8 +53,12 @@ export class TeamCreateComponent implements OnInit {
     this.http.post('/handlers/team_create', payload).subscribe({
       next: () => alert('Team created successfully!'),
       error: (err: any) => {
-            const errorMessage = err.error?.message || 'Create team failed';
+            const errorMessage = err.error?.message;
             alert(errorMessage); }
     });
+  }
+
+  goToAthleteDashboard() {
+    this.router.navigate(['/athlete-dashboard']);
   }
 }
