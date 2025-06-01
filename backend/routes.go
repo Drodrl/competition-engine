@@ -54,12 +54,24 @@ func NewRouter(db *sql.DB) http.Handler {
 	router.Handle("/api/tourney-formats", EnableCORS(handlers.GetTournamentFormatsHandler(db))).Methods("GET")
 
 	// Other handlers
-	router.Handle("/api/handlers/competitions", EnableCORS(handlers.NewCompetitionListHandler(db))).Methods("GET")
+	//router.Handle("/api/handlers/competitions", EnableCORS(handlers.NewCompetitionListHandler(db))).Methods("GET")
 	router.Handle("/api/handlers/athletes", EnableCORS(handlers.NewAthletesHandler(db))).Methods("GET", "POST")
 	router.Handle("/api/handlers/teams", EnableCORS(handlers.NewTeamsHandler(db))).Methods("GET", "POST")
 	router.Handle("/handlers/user_signup", EnableCORS(handlers.NewUserSignupHandler(db))).Methods("POST")
 	router.Handle("/handlers/team_signup", EnableCORS(handlers.NewTeamSignupHandler(db))).Methods("POST")
 	router.Handle("/handlers/team_create", EnableCORS(handlers.NewTeamCreateHandler(db))).Methods("POST")
+
+	router.Handle("/api/user-teams", EnableCORS(handlers.GetUserTeamsHandler(db)))
+	router.Handle("/api/team-participants", EnableCORS(handlers.GetTeamParticipantsHandler(db)))
+
+	// Teams endpoints
+	router.Handle("/api/remove-participants", EnableCORS(handlers.RemoveParticipantsHandler(db)))
+	router.Handle("/api/add-participants", EnableCORS(handlers.AddParticipantsHandler(db)))
+
+	router.Handle("/api/competitions", EnableCORS(http.HandlerFunc(handlers.GetAllCompetitions)))
+	// mux.Handle("/api/handlers/competitions", EnableCORS(handlers.NewCompetitionListHandler(db)))
+	router.Handle("/api/handlers/competitions", EnableCORS(handlers.NewUserSignupHandler(db)))
+	router.Handle("/api/competitions/flag_teams/", EnableCORS(http.HandlerFunc(handlers.GetCompetitionsByFlagTeams)))
 
 	// Static files
 	staticContent, err := fs.Sub(staticFiles, "static/browser")
