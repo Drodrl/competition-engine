@@ -136,10 +136,47 @@ func GetCompetitionByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Competition not found", http.StatusNotFound)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(c); err != nil {
-		http.Error(w, "Failed to encode response: "+err.Error(), http.StatusInternalServerError)
+
+	resp := map[string]interface{}{
+		"competition_id":   c.CompetitionId,
+		"competition_name": c.CompetitionName,
+		"sport_id":         c.SportID,
+		"sport_name":       c.SportName,
+		"start_date":       c.StartDate,
+		"end_date":         c.EndDate,
+		"max_participants": c.MaxParticipants,
+		"organizer_id":     c.OrganizerID,
+		"status":           c.Status,
+		"date_created":     c.DateCreated,
+		"date_updated":     c.DateUpdated,
+		"flag_teams":       c.FlagTeams,
 	}
+
+	if c.Status == 3 {
+		// Competition finished, fetch winner
+		var winnerName, teamName string
+		db.QueryRow(`
+            SELECT u.name_user, t.team_name
+            FROM matches m
+            JOIN rounds r ON m.round_id = r.round_id
+            JOIN match_participants mp ON mp.match_id = m.match_id
+            LEFT JOIN users u ON mp.user_id = u.id_user
+            LEFT JOIN teams t ON mp.team_id = t.team_id
+            WHERE r.stage_id = (
+                SELECT stage_id FROM competition_stages WHERE competition_id = $1 ORDER BY stage_order DESC LIMIT 1
+            )
+            AND mp.is_winner = true
+            ORDER BY m.match_id DESC
+            LIMIT 1
+        `, c.CompetitionId).Scan(&winnerName, &teamName)
+		resp["winner"] = map[string]interface{}{
+			"name":      winnerName,
+			"team_name": teamName,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
 
 // PUT /api/competitions/{id}
@@ -590,6 +627,14 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var winnerName, teamName string
+	if winnerUserID.Valid {
+		_ = db.QueryRow(`SELECT name_user FROM users WHERE id_user = $1`, winnerUserID.Int64).Scan(&winnerName)
+	}
+	if winnerTeamID.Valid {
+		_ = db.QueryRow(`SELECT team_name FROM teams WHERE team_id = $1`, winnerTeamID.Int64).Scan(&teamName)
+	}
+
 	// 5. Update competition status
 	_, err = db.Exec(`UPDATE competitions SET status = 3 WHERE competition_id = $1`, competitionID)
 	if err != nil {
@@ -597,8 +642,16 @@ func FinishCompetition(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"finished":true}`))
+	// 6. Return winner info in response
+	w.Header().Set("Content-Type", "application/json")
+	resp := map[string]interface{}{
+		"finished": true,
+		"winner": map[string]interface{}{
+			"name":      winnerName,
+			"team_name": teamName,
+		},
+	}
+	json.NewEncoder(w).Encode(resp)
 }
 
 // GET /api/competitions

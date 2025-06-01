@@ -1,68 +1,56 @@
 <div *ngIf="loading">Loading...</div>
 <div *ngIf="error">{{ error }}</div>
 
-<div class="competition-details" *ngIf="competition">
-  <div><strong>Competition Name:</strong> {{ competition.competition_name }}</div>
-  <div><strong>Sport:</strong> {{ competition.sport_name }}</div>
-  <div><strong>Start Date:</strong> {{ competition.start_date | date:'yyyy-MM-dd' }}</div>
-  <div><strong>End Date:</strong> {{ competition.end_date | date:'yyyy-MM-dd' }}</div>
-  <div><strong>Max Participants:</strong> {{ competition.max_participants }}</div>
-  <div>
-    <strong>Type:</strong>
-    <span *ngIf="competition.flag_teams; else individual">Teams</span>
-    <ng-template #individual>Individual</ng-template>
-  </div>
-  <button *ngIf="canFinishCompetition()" (click)="finishCompetition()">Finish Competition</button>
-</div>
+<main *ngIf="competition">
+  <nav style="margin-bottom: 1em;">
+    <button type="button" (click)="goBackToMyCompetitions()">Back to My Competitions</button>
+  </nav>
+  <section class="competition-details">
+    <div><strong>Competition Name:</strong> {{ competition.competition_name }}</div>
+    <div><strong>Sport:</strong> {{ competition.sport_name }}</div>
+    <div><strong>Start Date:</strong> {{ competition.start_date | date:'yyyy-MM-dd' }}</div>
+    <div><strong>End Date:</strong> {{ competition.end_date | date:'yyyy-MM-dd' }}</div>
+    <div><strong>Max Participants:</strong> {{ competition.max_participants }}</div>
+    <div>
+      <strong>Type:</strong>
+      <span *ngIf="competition.flag_teams; else individual">Teams</span>
+      <ng-template #individual>Individual</ng-template>
+    </div>
+    <button *ngIf="canFinishCompetition()" (click)="finishCompetition()">Finish Competition</button>
+  </section>
 
-<div class="manage-flex">
-  <div class="stages-panel">
-    <h3>Stages</h3>
-    <ul>
-      <li *ngFor="let stage of stages">
-        <a (click)="goToStage(stage.stage_id)" style="cursor:pointer; text-decoration:underline;">
-          {{stage.stage_order}}. {{stage.stage_name}}
-        </a>
-        <button
-          *ngIf="canAdvanceStageFor(stage)"
-          (click)="advanceStage(stage.stage_id!)">
-          Advance Stage
-        </button>
-      </li>
-    </ul>
-  </div>
-  <div class="participants-panel">
-    <h3>Participants</h3>
-    <ul>
-      <li *ngFor="let p of participants">
-        {{ p.name || p.team_name }}
-      </li>
-    </ul>
-    <button (click)="closeSignup()" [disabled]="signupClosed">Close Signup Period</button>
-  </div>
-</div>
+  <section *ngIf="winner" class="winner-section">
+    <h3>Winner</h3>
+    <div>
+      <span *ngIf="winner.name">Athlete: {{ winner.name }}</span>
+      <span *ngIf="winner.team_name">Team: {{ winner.team_name }}</span>
+    </div>
+  </section>
 
-<style>
-.competition-details {
-  margin-bottom: 2em;
-}
-.manage-flex {
-  display: flex;
-  gap: 40px;
-  align-items: flex-start;
-}
-.stages-panel, .participants-panel {
-  flex: 1 1 0;
-  background: #f8f8f8;
-  padding: 1em 1.5em;
-  border-radius: 8px;
-  min-width: 220px;
-  box-shadow: 0 2px 8px #0001;
-}
-.stages-panel ul, .participants-panel ul {
-  padding-left: 1.2em;
-}
-.participants-panel button {
-  margin-top: 1em;
-}
-</style>
+  <section class="manage-flex">
+    <section class="stages-panel">
+      <h3>Stages</h3>
+      <ol>
+        <li *ngFor="let stage of stages">
+          <a (click)="goToStage(stage.stage_id)" style="cursor:pointer; text-decoration:underline;">
+            {{stage.stage_order}}. {{stage.stage_name}}
+          </a>
+          <button
+            *ngIf="canAdvanceStageFor(stage)"
+            (click)="advanceStage(stage.stage_id!)">
+            Advance Stage
+          </button>
+        </li>
+      </ol>
+    </section>
+    <section class="participants-panel">
+      <h3>Participants</h3>
+      <ul>
+        <li *ngFor="let p of participants">
+          {{ p.name || p.team_name }}
+        </li>
+      </ul>
+      <button *ngIf="!signupClosed" (click)="closeSignup()">Close Signup Period</button>
+    </section>
+  </section>
+</main>

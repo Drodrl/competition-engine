@@ -28,7 +28,6 @@ export class CompetitionSignupComponent implements OnInit {
   competitions: Competition[] = [];
   sports: Sport[] = [];
   userId: number | null = null;
-  sports: { id: number; name: string }[] = [];
 
   constructor(private http: HttpClient, private router: Router) {}
 

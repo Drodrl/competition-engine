@@ -122,6 +122,6 @@ export class CompetitionService {
   }
 
   finishCompetition(competitionId: number) {
-    return this.http.post<{finished: boolean}>(`/api/competitions/${competitionId}/finish`, {});
+    return this.http.post<{finished: boolean, winner?: any}>(`/api/competitions/${competitionId}/finish`, {});
   }
 }

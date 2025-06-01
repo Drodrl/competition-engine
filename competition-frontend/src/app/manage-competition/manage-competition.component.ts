@@ -21,6 +21,7 @@ export class ManageCompetitionComponent implements OnInit {
   signupClosed = false;
   canAdvanceStage = false;
   selectedStageId!: number;
+  winner: any = null;
 
   // Cache for match completion status per stage
   private matchesCompleteCache: { [stageId: number]: boolean } = {};
@@ -37,6 +38,9 @@ export class ManageCompetitionComponent implements OnInit {
       next: data => {
         this.competition = data;
         this.loading = false;
+        if (data.winner) {
+          this.winner = data.winner;
+        }
       },
       error: err => {
         this.error = 'Failed to load competition';
@@ -123,8 +127,15 @@ export class ManageCompetitionComponent implements OnInit {
     this.svc.finishCompetition(this.competitionId).subscribe({
       next: res => {
         alert('Competition finished!');
+        if (res && res.winner) {
+          this.winner = res.winner;
+        }
       },
       error: err => alert('Error: ' + (err.error || err.message))
     });
+  }
+
+  goBackToMyCompetitions() {
+    this.router.navigate(['/my-competitions']);
   }
 }
