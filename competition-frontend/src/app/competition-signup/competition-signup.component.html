@@ -2,15 +2,15 @@
 
 <button (click)="goToAthleteDashboard()">Back</button>
 
-<table border="1" style="border-collapse: collapse; width: 100%; text-align: left;">
-
+<table>
+  <tr>
     <th>Competition Name</th>
     <th>Sport</th>
     <th>Start Date</th>
-    <th>End Date </th>
+    <th>End Date</th>
     <th>Status</th>
     <th>Action</th>
-    
+  </tr>
   <tr *ngFor="let comp of competitions">
     <td>{{ comp.competition_name }}</td>
     <td>{{ getSportName(comp.sport_id) }}</td>
@@ -20,4 +20,3 @@
     <td><button (click)="signUp(comp.competition_id)">Sign Up</button></td>
   </tr>
 </table>
-    

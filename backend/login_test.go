@@ -11,7 +11,7 @@ import (
 )
 
 func TestLoginHandlerSuccess(t *testing.T) {
-	db, _, err := sqlmock.New()
+	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
@@ -22,6 +22,10 @@ func TestLoginHandlerSuccess(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
+	mock.ExpectQuery(`SELECT id_user, role_id FROM users WHERE email = \$1 AND password_hash = \$2`).
+		WithArgs("u@e.com", "pw").
+		WillReturnRows(sqlmock.NewRows([]string{"id_user", "role_id"}).AddRow(1, 3))
+
 	rr := httptest.NewRecorder()
 	handler := NewLoginHandler(db)
 	handler.ServeHTTP(rr, req)
@@ -30,12 +34,15 @@ func TestLoginHandlerSuccess(t *testing.T) {
 		t.Fatalf("expected 200 OK; got %d", rr.Code)
 	}
 
-	var resp LoginResponse
+	var resp struct {
+		UserID int    `json:"userId"`
+		Role   string `json:"role"`
+	}
 	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode error: %v", err)
 	}
-	if resp.Message != "Login successful" {
-		t.Errorf("expected message 'Login successful'; got %q", resp.Message)
+	if resp.UserID != 1 || resp.Role != "organizer" {
+		t.Errorf("expected userId=1, role=organizer; got %+v", resp)
 	}
 }
 

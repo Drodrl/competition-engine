@@ -1,0 +1,84 @@
+<main>
+  <header>
+    <h2>Manage Stage</h2>
+  </header>
+
+  <nav style="margin-bottom: 1em;">
+    <button type="button" (click)="goBackToManageCompetition()">Back to Competition</button>
+  </nav>
+
+  <section class="rounds-panel">
+    <header>
+      <h3>Rounds</h3>
+    </header>
+    <ul>
+      <li *ngFor="let round of rounds" [class.selected]="round === selectedRound">
+        <button type="button" (click)="selectRound(round)">
+          Round {{ round.round_number }}
+        </button>
+        <span *ngIf="roundMatchCounts[round.round_id]">
+          ({{ roundMatchCounts[round.round_id].completed }}/{{ roundMatchCounts[round.round_id].total }} matches complete)
+        </span>
+      </li>
+    </ul>
+    <button
+      *ngIf="canGenerateNextRound"
+      type="button"
+      (click)="generateRound()"
+      [disabled]="generatingRound"
+      [title]="!canGenerateNextRound ? cannotGenerateReason : ''">
+      {{ generatingRound ? 'Generating...' : 'Generate Next Round' }}
+    </button>
+  </section>
+
+  <section *ngIf="selectedRound" class="matches-panel">
+    <header>
+      <h3>Matches for Round {{ selectedRound.round_number }}</h3>
+    </header>
+    <article *ngFor="let match of matches; let matchIdx = index" class="match-card">
+      <header>
+        <h4>Match {{ matchIdx + 1 }}</h4>
+        <small>
+          Scheduled: {{ match.scheduled_at | date:'short' }}
+          <span *ngIf="match.completed_at">
+            &nbsp;|&nbsp; Completed: {{ match.completed_at | date:'short' }}
+          </span>
+        </small>
+      </header>
+      <table>
+        <thead>
+          <tr>
+            <th>Participant</th>
+            <th>Score</th>
+            <th>Winner</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of matchParticipants[match.match_id]; let i = index">
+            <td>
+              {{ p.user_id || ('Team ' + p.team_id) }}
+            </td>
+            <td>
+              <input type="number" [(ngModel)]="p.score" [disabled]="competitionStatus === 3" />
+            </td>
+            <td>
+              <input
+                type="radio"
+                name="winner-{{match.match_id}}"
+                [checked]="p.is_winner"
+                (change)="setWinner(match.match_id, i)"
+                [disabled]="competitionStatus === 3"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button
+        type="button"
+        (click)="saveParticipantResult(match.match_id)"
+        *ngIf="competitionStatus !== 3">
+        Save All
+      </button>
+    </article>
+  </section>
+</main>

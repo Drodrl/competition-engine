@@ -42,12 +42,19 @@ export class MyCompetitionsComponent implements OnInit {
       this.router.navigate(['/edit-competition', id]);
     }
     else{
-      //this.router.navigate(['/manage-competition', id]);
+      this.router.navigate(['/manage-competition', id]);
     }
   }
 
   statusLabel(status: number): string {
     return this.svc.statusLabel(status)
+  }
+
+  getActionLabel(status: number): string {
+    if (status === 0) return 'Edit';        // Draft
+    if (status === 1 || status === 2) return 'Manage'; // Open or Closed
+    if (status === 3) return 'Details';     // Finished
+    return 'Manage';
   }
 
   goBack() {

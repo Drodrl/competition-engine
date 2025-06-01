@@ -8,7 +8,7 @@ interface Competition {
   competition_name: string;
   sport_id: number;
   start_date: Date;
-  end_date?: Date;
+  end_date?: Date; 
   status?: number;
 }
 

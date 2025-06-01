@@ -8,6 +8,8 @@ import { AthleteDashboardComponent} from './athlete-dashboard/athlete-dashboard.
 import { CompetitionSignupComponent } from './competition-signup/competition-signup.component';
 import { TeamCreateComponent } from './team-create/team-create.component';
 import { TeamSignupComponent } from './team-signup/team-signup.component';  
+import { ManageCompetitionComponent } from './manage-competition/manage-competition.component';
+import { ManageStageComponent } from './manage-stage/manage-stage.component';
 import { TeamManageComponent } from './team-manage/team-manage.component';
 
 export const appRoutes: Routes = [
@@ -21,5 +23,7 @@ export const appRoutes: Routes = [
   { path: 'competition-signup', component: CompetitionSignupComponent },
   { path: 'team-create', component: TeamCreateComponent },
   { path: 'team-signup', component: TeamSignupComponent },
+  { path: 'manage-competition/:id', component: ManageCompetitionComponent},
+  { path: 'manage-competition/:id/stage/:stageId', component: ManageStageComponent },
   { path: 'team-manage', component: TeamManageComponent },
 ];
