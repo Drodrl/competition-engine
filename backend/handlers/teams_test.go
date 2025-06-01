@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -10,14 +9,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
-
-func setupMockDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to create mock database: %v", err)
-	}
-	return db, mock
-}
 
 func TestNewTeamsHandler(t *testing.T) {
 	db, mock := setupMockDB(t)
