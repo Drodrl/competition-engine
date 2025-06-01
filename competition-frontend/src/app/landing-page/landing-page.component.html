@@ -1,0 +1,42 @@
+<div class="landing-container">
+  <h1>Welcome to Competition Engine</h1>
+  <button routerLink="/login">Login</button>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <h2>Finished Competitions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Competition Name</th>
+        <th>Sport</th>
+        <th>Winner</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let comp of finishedCompetitions">
+        <td>{{ comp.competition_name }}</td>
+        <td>{{ comp.sport_name }}</td>
+        <td>{{ comp.winner }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Ongoing Competitions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Competition Name</th>
+        <th>Sport</th>
+        <th>Start Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let comp of ongoingCompetitions">
+        <td>{{ comp.competition_name }}</td>
+        <td>{{ comp.sport_name }}</td>
+        <td>{{ comp.start_date }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
