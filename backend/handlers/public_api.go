@@ -52,6 +52,8 @@ func GetPublicCompetitions(w http.ResponseWriter, r *http.Request) {
 		paramCount++
 	}
 
+	_ = paramCount
+
 	query += " ORDER BY date_created DESC"
 
 	rows, err := db.Query(query, args...)
