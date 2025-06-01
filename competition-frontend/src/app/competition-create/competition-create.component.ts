@@ -69,7 +69,7 @@ export class CompetitionCreateComponent implements OnInit {
       organizer_id: Number(this.organizerId),
       max_participants: +formValue.max_participants,
       flag_teams: !!formValue.flag_teams
-    };
+    };
 
     console.log('Submitting payload:', payload);
     this.svc.createCompetition(payload).subscribe({

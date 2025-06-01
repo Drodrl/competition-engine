@@ -159,6 +159,21 @@ export class EditCompetitionComponent implements OnInit {
         alert('Please select a valid tournament format for each stage.');
         return false;
       }
+      // 1st stage, only one stage: must be single or double elim
+      if (i === 0 && this.stages.length === 1 && !(stage.tourney_format_id === 1 || stage.tourney_format_id === 2)) {
+        alert('If there is only one stage, it must be Single or Double Elimination.');
+        return false;
+      }
+      // 1st stage, two stages: must be RR
+      if (i === 0 && this.stages.length === 2 && stage.tourney_format_id !== 3) {
+        alert('If there are two stages, the first must be Round Robin.');
+        return false;
+      }
+      // 2nd stage, two stages: must be single or double elim
+      if (i === 1 && this.stages.length === 2 && !(stage.tourney_format_id === 1 || stage.tourney_format_id === 2)) {
+        alert('The last stage must be Single or Double Elimination.');
+        return false;
+      }
       if (stage.participants_at_start < format.minimum_participants) {
         alert(`Stage "${stage.stage_name}" requires at least ${format.minimum_participants} participants.`);
         return false;
@@ -332,7 +347,33 @@ export class EditCompetitionComponent implements OnInit {
   get statusLabel(): string {
     return this.svc.statusLabel(this.status) 
   }
-      
+
+  get availableFormatsForNewStage(): TournamentFormat[] {
+    // If adding the first stage
+    if (this.stages.length === 0) {
+      // Allow all formats for now, but check on save
+      return this.tourneyFormats;
+    }
+    // If adding the second (last) stage
+    if (this.stages.length === 1) {
+      // Only allow Single or Double Elimination
+      return this.tourneyFormats.filter(tf => tf.id === 1 || tf.id === 2);
+    }
+    return this.tourneyFormats;
+  }
+
+  get availableFormatsForEditStage(): TournamentFormat[] {
+    if (!this.editStageData) return this.tourneyFormats;
+    // Editing first stage
+    if (this.editStageData.stage_order === 1) {
+      return this.tourneyFormats;
+    }
+    // Editing last (second) stage
+    if (this.editStageData.stage_order === 2 && this.stages.length === 2) {
+      return this.tourneyFormats.filter(tf => tf.id === 1 || tf.id === 2);
+    }
+    return this.tourneyFormats;
+  }
 
   tourneyLabel(tourneyId: number): string {
     const found = this.tourneyFormats.find(tf => tf.id === tourneyId);

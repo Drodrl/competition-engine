@@ -32,11 +32,18 @@
       <h3>Stages</h3>
       <ol>
         <li *ngFor="let stage of stages">
-          <a (click)="goToStage(stage.stage_id)" style="cursor:pointer; text-decoration:underline;">
-            {{stage.stage_order}}. {{stage.stage_name}}
-          </a>
+          <a
+            *ngIf="signupClosed"
+            (click)="goToStage(stage.stage_id)"
+            style="cursor:pointer; text-decoration:underline;"
+            >{{stage.stage_name}}</a>
+          <span
+            *ngIf="!signupClosed"
+            style="color:gray; cursor:not-allowed;"
+            title="You must close signup before managing stages."
+            >{{stage.stage_name}}</span>
           <button
-            *ngIf="canAdvanceStageFor(stage)"
+            *ngIf="canAdvanceStageFor(stage) && stage.stage_id === getCurrentAdvanceableStageId()"
             (click)="advanceStage(stage.stage_id!)">
             Advance Stage
           </button>

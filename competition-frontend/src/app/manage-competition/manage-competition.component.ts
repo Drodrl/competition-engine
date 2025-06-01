@@ -135,6 +135,15 @@ export class ManageCompetitionComponent implements OnInit {
     });
   }
 
+  getCurrentAdvanceableStageId(): number | null {
+    for (const stage of this.stages) {
+      if (this.canAdvanceStageFor(stage)) {
+        return stage.stage_id!;
+      }
+    }
+    return null;
+  }
+
   goBackToMyCompetitions() {
     this.router.navigate(['/my-competitions']);
   }

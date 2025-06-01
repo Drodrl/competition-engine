@@ -350,7 +350,7 @@ func getCompetitionStages(competitionID int) ([]models.StageDTO, error) {
 
 // Helper: Get minimum participants for each tournament format
 func getTournamentFormatMinimums() (map[int]int, error) {
-	rows, err := db.Query(`SELECT id, minimum_participants FROM tournament_formats`)
+	rows, err := db.Query(`SELECT tourney_format_id, min_participants FROM tournament_formats`)
 	if err != nil {
 		return nil, errors.New("DB error: " + err.Error())
 	}
