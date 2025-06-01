@@ -21,6 +21,7 @@ interface Sport {
   selector: 'app-competition-signup',
   standalone: true,
   templateUrl: './competition-signup.component.html',
+  styleUrls: ['./competition-signup.component.scss'],
   imports: [CommonModule, RouterModule],
 })
 

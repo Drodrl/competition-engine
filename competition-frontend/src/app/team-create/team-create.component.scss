@@ -19,10 +19,12 @@
   background-color: #0056b3;
 }
 
+
+
 form {
   margin: 2em auto;
   padding: 2em 1.5em;
-  background: var(--pico-background);
+  background: var(--pico-background, #4c4e87);
   border-radius: 8px;
   box-shadow: 0 2px 8px #0001;
 }
@@ -40,7 +42,7 @@ th, td {
   text-align: left;
 }
 
-dialog {
+form {
   margin: 2em auto;
   padding: 2em;
   background: var(--pico-background);

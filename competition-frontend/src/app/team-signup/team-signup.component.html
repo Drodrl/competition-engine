@@ -1,5 +1,7 @@
-<h1>Sign up your team for a competition</h1>
-<button (click)="goToAthleteDashboard()">Back</button>
+<div class="header">
+  <h1>Sign up your team for a competition</h1>
+  <button (click)="goToAthleteDashboard()" class="back-button">Back</button>
+</div>
 
 <table>
   <tr>
@@ -16,7 +18,7 @@
     <td>{{ comp.start_date | date }}</td>
     <td>{{ comp.end_date | date }}</td>
     <td>{{ getCompStatus(comp) }}</td>
-    <td><button (click)="signUp(comp.competition_id)">Sign Up</button></td>
+    <td><button (click)="openModal(comp.competition_id)">Sign Up</button></td>
   </tr>
 </table>
 

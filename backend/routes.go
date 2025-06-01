@@ -67,6 +67,12 @@ func NewRouter(db *sql.DB) http.Handler {
 	router.Handle("/handlers/team_signup", EnableCORS(handlers.NewTeamSignupHandler(db))).Methods("POST")
 	router.Handle("/handlers/team_create", EnableCORS(handlers.NewTeamCreateHandler(db))).Methods("POST")
 	router.Handle("/api/handlers/competitions", EnableCORS(handlers.NewUserSignupHandler(db))) // If needed
+	router.Handle("/api/user-teams", EnableCORS(handlers.GetUserTeamsHandler(db)))
+	router.Handle("/api/team-participants", EnableCORS(handlers.GetTeamParticipantsHandler(db)))
+	router.Handle("/api/competitions/flag_teams/{flagTeams}", EnableCORS(http.HandlerFunc(handlers.GetCompetitionsByFlagTeams)))
+
+	// router.Handle("/api/competitions", EnableCORS(http.HandlerFunc(handlers.GetAllCompetitions)))
+	// mux.Handle("/api/handlers/competitions", EnableCORS(handlers.NewCompetitionListHandler(db)))
 
 	// --- Static Files ---
 	staticContent, err := fs.Sub(staticFiles, "static/browser")

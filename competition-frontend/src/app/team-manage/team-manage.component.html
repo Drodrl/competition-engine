@@ -1,8 +1,9 @@
-<h1>My teams</h1>
+<div class="header">
+  <h1>My teams</h1>
+  <button (click)="goToAthleteDashboard()" class="back-button">Back</button>
+</div>
 
-<button (click)="goToAthleteDashboard()">Back</button>
-
-<table border="1" style="border-collapse: collapse; width: 100%; text-align: left;">
+<table>
 
     <th>Team Name</th>
     <th>Edit team</th>
@@ -16,14 +17,14 @@
 </table>
 
 <!-- Edit Team Modal -->
-<div *ngIf="showEditModal" class="modal">
+<dialog *ngIf="showEditModal" class="modal">
   <div class="modal-content">
     <h2>Edit Team</h2>
     <p><strong>Team Name:</strong> {{ selectedTeam?.team_name }}</p>
 
     <!-- Participants Table -->
     <h3>Participants</h3>
-    <table border="1" style="border-collapse: collapse; width: 100%; text-align: left;">
+    <table>
       <thead>
         <tr>
           <th>Remove</th>
@@ -42,18 +43,20 @@
     <button (click)="openAddModal()">Add Participants</button>
 
     <!-- Update Team Button -->
-    <button (click)="updateTeam()">Update Team</button>
-    <button (click)="closeEditModal()">Close</button>
+    <div class="button-row">
+      <button (click)="updateTeam()">Update Team</button>
+      <button (click)="closeEditModal()">Close</button>
+    </div>
   </div>
-</div>
+</dialog>
 
 <!-- Add Participants Modal -->
-<div *ngIf="showAddModal" class="modal">
+<dialog *ngIf="showAddModal" class="modal">
   <div class="modal-content">
     <h2>Add Participants</h2>
 
     <!-- Athletes Table -->
-    <table border="1" style="border-collapse: collapse; width: 100%; text-align: left;">
+    <table>
       <thead>
         <tr>
           <th>Add</th>
@@ -69,7 +72,9 @@
     </table>
 
     <!-- Add Button -->
-    <button (click)="addParticipants()">Add</button>
-    <button (click)="closeAddModal()">Close</button>
+    <div class="button-row">
+      <button (click)="addParticipants()">Add</button>
+      <button (click)="closeAddModal()">Close</button>
+    </div>
   </div>
-</div>
+</dialog>
