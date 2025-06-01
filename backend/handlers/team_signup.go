@@ -38,12 +38,14 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		}
 		if req.TeamID == nil {
 			log.Println("Team ID is required")
-			http.Error(w, "Team ID is required", http.StatusBadRequest)
+			// http.Error(w, "Team ID is required", http.StatusBadRequest)
+			sendJSONError(w, "Team ID is required", http.StatusBadRequest)
 			return
 		}
 		if !exists {
 			log.Println("Team does not exist:", *req.TeamID)
-			http.Error(w, "Team does not exist", http.StatusBadRequest)
+			// http.Error(w, "Team does not exist", http.StatusBadRequest)
+			sendJSONError(w, "Team does not exist", http.StatusBadRequest)
 			return
 		}
 
@@ -55,7 +57,8 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 			return
 		}
 		if !exists {
-			http.Error(w, "Competition does not exist", http.StatusBadRequest)
+			// http.Error(w, "Competition does not exist", http.StatusBadRequest)
+			sendJSONError(w, "Competition does not exist", http.StatusBadRequest)
 			return
 		}
 
@@ -68,7 +71,8 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 			return
 		}
 		if isOpen != 1 {
-			http.Error(w, "Competition is not open for signup", http.StatusBadRequest)
+			// http.Error(w, "Competition is not open for signup", http.StatusBadRequest)
+			sendJSONError(w, "Competition is not open for signup", http.StatusBadRequest)
 			return
 		}
 
@@ -82,7 +86,8 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		}
 		if !isTeamCompetition {
 			log.Println("Competition is not a team competition:", req.CompetitionID)
-			http.Error(w, "Cannot sign up to an individual competition", http.StatusBadRequest)
+			// http.Error(w, "Cannot sign up to an individual competition", http.StatusBadRequest)
+			sendJSONError(w, "Cannot sign up to an individual competition", http.StatusBadRequest)
 			return
 		}
 
@@ -98,17 +103,19 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		}
 		if teamSignedUp {
 			log.Println("Team is already signed up for the competition:", *req.TeamID)
-			http.Error(w, "Team is already signed up for the competition", http.StatusBadRequest)
+			// http.Error(w, "Team is already signed up for the competition", http.StatusBadRequest)
+			sendJSONError(w, "Team is already signed up for the competition", http.StatusBadRequest)
 			return
 		}
 
 		// Check if any user in the team is already part of another team in the same competition
 		var conflictingUsers []int
 		rows, err := db.Query(`
-		SELECT ut.user_id
-		FROM user_teams ut
-		INNER JOIN competition_participants cp ON ut.team_id = cp.team_id
-		WHERE cp.competition_id = $1 AND ut.team_id != $2
+		SELECT ut1.user_id
+		FROM user_teams ut1
+		INNER JOIN user_teams ut2 ON ut1.user_id = ut2.user_id
+		INNER JOIN competition_participants cp ON ut2.team_id = cp.team_id
+		WHERE cp.competition_id = $1 AND ut1.team_id = $2 AND ut2.team_id != $2
 		`, req.CompetitionID, *req.TeamID)
 		if err != nil {
 			log.Printf("Error checking conflicting users: %v", err)
@@ -128,7 +135,8 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 
 		if len(conflictingUsers) > 0 {
 			log.Printf("Conflicting users found: %v", conflictingUsers)
-			http.Error(w, "Some users in the team are already part of another team in the competition", http.StatusBadRequest)
+			// http.Error(w, "Some users in the team are already part of another team in the competition", http.StatusBadRequest)
+			sendJSONError(w, "Some users in the team are already part of another team in the competition", http.StatusBadRequest)
 			return
 		}
 
@@ -154,7 +162,8 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		}
 		if numParticipants >= maxParticipants {
 			// log.Println("Competition is already full:", req.CompetitionID)
-			http.Error(w, "Competition is already full", http.StatusBadRequest)
+			// http.Error(w, "Competition is already full", http.StatusBadRequest)
+			sendJSONError(w, "Competition is already full", http.StatusBadRequest)
 			return
 		}
 
@@ -170,7 +179,8 @@ func NewTeamSignupHandler(db *sql.DB) http.Handler {
 		}
 		if !isTeamLeader {
 			log.Println("Only team leaders can sign up for competitions")
-			http.Error(w, "Only team leaders can sign up for competitions", http.StatusForbidden)
+			// http.Error(w, "Only team leaders can sign up for competitions", http.StatusForbidden)
+			sendJSONError(w, "Only team leaders can sign up for competitions", http.StatusForbidden)
 			return
 		}
 

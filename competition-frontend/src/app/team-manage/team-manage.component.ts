@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule, Router } from '@angular/router';
 
 interface Team {
   team_id: number;
@@ -20,7 +21,7 @@ interface User {
   selector: 'app-team-manage',
   templateUrl: './team-manage.component.html',
   styleUrls: ['./team-manage.component.scss'],
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   standalone: true
 })
 export class TeamManageComponent {
@@ -32,7 +33,7 @@ export class TeamManageComponent {
   showAddModal = false; 
   userId: number | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit() {
     this.userId = Number(sessionStorage.getItem('userId'));
@@ -195,5 +196,7 @@ addParticipants() {
     this.openEditModal(team);
   }
 
-
+  goToAthleteDashboard() {
+    this.router.navigate(['/athlete-dashboard']); // Replace with the actual route for the athlete dashboard
+  }
 }

@@ -139,7 +139,8 @@ func AddParticipantsHandler(db *sql.DB) http.HandlerFunc {
 
 			if !exists {
 				log.Printf("User does not exist (user_id: %d)", userID)
-				http.Error(w, "User does not exist", http.StatusBadRequest)
+				// http.Error(w, "User does not exist", http.StatusBadRequest)
+				sendJSONError(w, "User does not exist", http.StatusBadRequest)
 				return
 			}
 			// Check if the user is already in the team

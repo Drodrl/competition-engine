@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 
@@ -38,7 +38,7 @@ export class TeamSignupComponent implements OnInit {
   userId: number | null = null;
   showModal: boolean = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit() {
     this.userId = Number(sessionStorage.getItem('userId'));
@@ -87,5 +87,9 @@ export class TeamSignupComponent implements OnInit {
         alert(errorMessage);
       },
     });
+  }
+
+  goToAthleteDashboard() {
+    this.router.navigate(['/athlete-dashboard']); 
   }
 }
