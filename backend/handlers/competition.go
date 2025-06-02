@@ -78,9 +78,11 @@ func GetCompetitionsByOrganizer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rows, err := db.Query(`
-        SELECT competition_id, competition_name, sport_id, start_date, end_date, max_participants, organizer_id, status, date_created, date_updated, flag_teams
-        FROM competitions WHERE organizer_id = $1
-        ORDER BY date_created DESC
+        SELECT c.competition_id, c.competition_name, c.sport_id, c.start_date, c.end_date, c.max_participants, c.organizer_id, c.status, c.date_created, c.date_updated, c.flag_teams, s.sport_name
+        FROM competitions c
+        JOIN sports s ON c.sport_id = s.sport_id
+        WHERE c.organizer_id = $1
+        ORDER BY c.date_created DESC
     `, organizerID)
 	if err != nil {
 		sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
@@ -94,7 +96,7 @@ func GetCompetitionsByOrganizer(w http.ResponseWriter, r *http.Request) {
 	var competitions []models.Competition
 	for rows.Next() {
 		var c models.Competition
-		if err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams); err != nil {
+		if err := rows.Scan(&c.CompetitionId, &c.CompetitionName, &c.SportID, &c.StartDate, &c.EndDate, &c.MaxParticipants, &c.OrganizerID, &c.Status, &c.DateCreated, &c.DateUpdated, &c.FlagTeams, &c.SportName); err != nil {
 			sendJSONError(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -796,7 +798,7 @@ func validateStagesBusinessRules(competitionID int, stages []models.StageDTO, ma
 
 func getFormatMinParticipants(formatID int) (int, error) {
 	var min int
-	if err := db.QueryRow(`SELECT minimum_participants FROM tournament_formats WHERE tourney_format_id = $1`, formatID).Scan(&min); err != nil {
+	if err := db.QueryRow(`SELECT min_participants FROM tournament_formats WHERE tourney_format_id = $1`, formatID).Scan(&min); err != nil {
 		return 0, err
 	}
 	return min, nil

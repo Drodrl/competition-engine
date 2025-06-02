@@ -41,6 +41,9 @@ export class ManageCompetitionComponent implements OnInit {
         if (data.winner) {
           this.winner = data.winner;
         }
+        if (this.competition.status == 2){
+          this.signupClosed = true;
+        }
       },
       error: err => {
         this.error = 'Failed to load competition';
